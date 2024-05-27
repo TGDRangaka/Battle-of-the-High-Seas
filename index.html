@@ -1,13 +1,43 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + TS</title>
 
-    <link rel="stylesheet" href="/src/style.css">
-  </head>
-  <body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vite + TS</title>
 
-  </body>
+  <link rel="stylesheet" href="/src/assets/styles/style.css">
+
+  <!-- fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Jura:wght@300..700&family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+  <div class="bg"></div>
+
+  <img class="logo-img" src="src/assets/imgs/logo.png" alt="">
+
+  <div class="button-group">
+    <button id="createRoomBtn" class="button-49" role="button">CREATE</button>
+    <button id="joinRoomBtn" class="button-49" role="button">JOIN</button>
+  </div>
+
+  <span class="online">ONLINE: <span class="count">56</span></span>
+  <span class="copyright">© Copyright 2024. Made by TGDRangaka</span>
+
+  <div class="pop-up">
+    <div class="room-id">
+      <input type="number" name="roomId" id="roomIdInput" placeholder="ROOM ID">
+      <button class="button-49" type="button" id="submitCode">JOIN</button>
+    </div>
+    <button type="button" class="close-btn"><img src="src/assets/icons/close.png" alt=""></button>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>
