@@ -43,3 +43,19 @@ auth.onAuthStateChanged(user => {
 // Creade Ships
 
 // Set values
+
+// Drag and Drop ships
+const ship = document.getElementById("drop-ship");
+const dropzone = document.getElementById("dropzone");
+
+// ship?.addEventListener('dragstart', function(e) {
+//     console.log(e);
+// })
+
+dropzone?.addEventListener('dragover', function(e) {
+    e.preventDefault();
+})
+
+dropzone?.addEventListener('drop', function(e) {
+    ship && dropzone.prepend(ship);
+})

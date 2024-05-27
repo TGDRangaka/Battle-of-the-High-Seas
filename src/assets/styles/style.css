@@ -43,57 +43,6 @@ body {
   gap: 50px;
 }
 
-/* 
-.button-group button {
-  width: 600px;
-  height: 100px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.02);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  --b-value: 3.8px;
-  backdrop-filter: blur(var(--b-value));
-  -webkit-backdrop-filter: blur(var(--b-value));
-  border: 1px solid rgba(255, 255, 255, 0.22);
-
-  font-size: 48px;
-  font-family: "Quantico", sans-serif;
-  font-weight: 700;
-  font-style: normal;
-
-  color: #fff;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.button-group button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 300%;
-  height: 100%;
-  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: all 0.3s ease;
-}
-
-.button-group button:hover::before {
-  left: 100%;
-}
-
-.button-group button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 6px 35px rgba(0, 0, 0, 0.2);
-  transform: translateY(-3px);
-}
-
-.button-group button:active {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(2px);
-} */
-
 .online {
   position: absolute;
   right: 20px;
