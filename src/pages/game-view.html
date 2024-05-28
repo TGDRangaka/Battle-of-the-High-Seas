@@ -85,7 +85,7 @@
             <div class="board-area left">
                 <span class="bg"></span>
                 <div class="board" id="dropzone">
-                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                    
                 </div>
                 <div class="number-row">
                     <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
@@ -93,6 +93,37 @@
                 <div class="letter-row">
                     <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span><span>I</span><span>J</span>
                 </div>
+            </div>
+
+            <div class="board-area guide-pane">
+                <p>Place your all ships and click Ready.</p>
+                <div class="ships">
+                    <!-- <div class="ship" draggable="true" data-size="6x1">
+                        <img src="../assets/imgs/ship-6-1.png" alt="">
+                    </div>
+                    <div class="ship" draggable="true" data-size="5x1">
+                        <img src="../assets/imgs/ship-5-1.png" alt="">
+                    </div>
+                    <div class="ship" draggable="true" data-size="4x1">
+                        <img src="../assets/imgs/ship-4-2.png" alt="">
+                    </div>
+                    <div class="ship" draggable="true" data-size="4x1">
+                        <img src="../assets/imgs/ship-4-1.png" alt="">
+                    </div>
+                    <div class="ship" draggable="true" data-size="3x1">
+                        <img src="../assets/imgs/ship-3-2.png" alt="">
+                    </div>
+                    <div class="ship" draggable="true" data-size="3x1">
+                        <img src="../assets/imgs/ship-3-1.png" alt="">
+                    </div>
+                    <div class="ship" draggable="true" data-size="2x1">
+                        <img src="../assets/imgs/ship-2-1.png" alt="">
+                    </div> -->
+                </div>
+                <ul>
+                    <li>Drag and drop to place ships.</li>
+                    <li>Click to rotate ship.</li>
+                </ul>
             </div>
 
             <div class="board-area right d-none">
@@ -108,36 +139,6 @@
                 </div>
             </div>
 
-            <div class="board-area guide-pane">
-                <p>Place your all ships and click Ready.</p>
-                <div class="ships">
-                    <div id="drop-ship" class="ship"  draggable="true">
-                        <img src="../assets/imgs/ship-6-1.png" alt="">
-                    </div>
-                    <div class="ship" draggable="true">
-                        <img src="../assets/imgs/ship-5-1.png" alt="">
-                    </div>
-                    <div class="ship">
-                        <img src="../assets/imgs/ship-4-2.png" alt="">
-                    </div>
-                    <div class="ship">
-                        <img src="../assets/imgs/ship-4-1.png" alt="">
-                    </div>
-                    <div class="ship">
-                        <img src="../assets/imgs/ship-3-2.png" alt="">
-                    </div>
-                    <div class="ship">
-                        <img src="../assets/imgs/ship-3-1.png" alt="">
-                    </div>
-                    <div class="ship">
-                        <img src="../assets/imgs/ship-2-1.png" alt="">
-                    </div>
-                </div>
-                <ul>
-                    <li>Drag and drop to place ships.</li>
-                    <li>Click to rotate ship.</li>
-                </ul>
-            </div>
         </section>
 
     </main>
@@ -148,10 +149,10 @@
                 <div class="fleet-name">Enemy Fleet</div>
             </div>
             <div class="ships">
-                <div class="ship">
+                <div id="drop-ship" class="ship"  draggable="true">
                     <img src="../assets/imgs/ship-6-1.png" alt="">
                 </div>
-                <div class="ship">
+                <div class="ship" draggable="true">
                     <img src="../assets/imgs/ship-5-1.png" alt="">
                 </div>
                 <div class="ship">
