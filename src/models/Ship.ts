@@ -35,6 +35,6 @@ export enum ShipStatus {
 }
 
 export enum Direction {
-    COLUMN,
-    ROW
+    COLUMN = 'column',
+    ROW = 'row',
 }

@@ -58,7 +58,7 @@ for (let ship of ships) {
     // break;
     if (ship.status === ShipStatus.INACTIVE) {
         $(".guide-pane .ships").append(`
-        <div id="${ship.id}" class="ship" draggable="true" data-size="${ship.size}">
+        <div id="${ship.id}" class="ship" draggable="true" data-size="${ship.size}" direaction="column">
             <img src="../assets/imgs/${ship.id}.png" alt="">
         </div>
     `)
@@ -78,8 +78,10 @@ const $cells = $(".cell");
 
 let $selectedShip: any = null;
 
-$(".guide-pane").on("dragstart", '.ship', function (e: JQuery.TriggeredEvent) {
+$(".guide-pane, #dropzone").on("dragstart", '.ship', function (e: JQuery.TriggeredEvent) {
     $selectedShip = $(this);
+    const ship = ships.find(ship => ship.id === $selectedShip.attr("id"));
+    if (!ship) return false;
     const shipSize = ($(this).data("size") as string).split("x");
     const shipLength = parseInt(shipSize[0]);
 
@@ -88,44 +90,39 @@ $(".guide-pane").on("dragstart", '.ship', function (e: JQuery.TriggeredEvent) {
         let index: number = $cells.index(this);
         let startX: number = index % 10;
         const startY: number = Math.floor(index / 10);
-        console.log(index, startX);
 
+        // console.log(isShipCanPlace(index, ship));
+        let placingCells: number[] = [];
+        for (let i = 0; i < shipLength; i++) {
+            let cellGap = ship.direction === Direction.ROW
+                ? i
+                : (i * 10);
+            const currentCellIndex = index + cellGap;
+            placingCells.push(currentCellIndex);
+        }
         $cells.removeClass("highlight");
         $cells.removeClass("warning");
-        if (startX + shipLength > 10) {
-            for (let i = 0; i < shipLength; i++) {
-                const currentCellIndex = index + i;
-                if ((currentCellIndex % 10) >= startX) {
-                    $cells.eq(currentCellIndex).addClass("warning");
-                }
-            }
-        } else {
-            for (let i = 0; i < shipLength; i++) {
-                const currentCellIndex = index + i;
-                if ((currentCellIndex % 10) >= startX) {
-                    $cells.eq(currentCellIndex).addClass("highlight");
-                }
-            }
+        if(isShipCanPlace(index, ship)){
+            placingCells.map(cellIndex => $cells.eq(cellIndex).addClass("highlight"))
+        }else{
+            placingCells.map(cellIndex => $cells.eq(cellIndex).addClass("warning"))
         }
+        // $cells.removeClass("highlight");
+        // $cells.removeClass("warning");
+
     });
 });
 
 $cells.on('drop', function (e) {
-    const shipLength: number = parseInt($selectedShip.data("size").split("x")[0]);
     const index = $(this).data("index");
-    const startX = index % 10;
+    const ship = ships.find(ship => ship.id ===$selectedShip.attr('id'));
+    if(!ship) return;
 
-    if (!(startX + shipLength > 10)) {
+    // if (!(startX + shipLength > 10 || alredyInShip)) {
+    if (isShipCanPlace(index, ship)) {
         e.preventDefault();
         $cells.removeClass("highlight");
-
-        for (let i = 1; i < shipLength; i++) {
-            $cells.eq(index + i).remove();
-        }
-        $(this).css({
-            gridColumnStart: startX + 1,
-            gridColumnEnd: startX + shipLength + 1
-        })
+        $cells.removeClass("warning");
         $(this).prepend($selectedShip);
 
         // update ship status
@@ -137,41 +134,112 @@ $cells.on('drop', function (e) {
         }
         return;
     }
+    $cells.removeClass("highlight");
     $cells.removeClass("warning");
 });
+
+function isShipCanPlace(index: number, ship: Ship): boolean {
+    let startX: number = index % 10;
+    const startY: number = Math.floor(index / 10);
+    const alredyInShip = ships.find(s => s.index === index && s.id !== ship.id);
+
+    // if ship direction row
+    if (ship.direction === Direction.ROW) {
+        for (let i = 0; i < ship.length; i++) {
+            let currentIndex = index + i;
+            if ((startX + ship.length > 10) || ships.find(s => s.index === currentIndex && s.id !== ship.id)) {
+                return false;
+            }
+        }
+    } else {
+        for (let i = 0; i < ship.length; i++) {
+            let currentIndex = index + i * 10;
+            if ((startY + ship.length > 10) || ships.find(s => s.index === currentIndex && s.id !== ship.id)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
 
 // Rotate the placed ship
 $cells.on('click', function (): void {
     const index = $(this).data("index");
-    console.log(index)
     const clickedShip = ships.find(ship => ship.index === index);
     if (!clickedShip) return;
-    let newShipIndexes: number[] = [];
-    let isCanRotate: boolean = true;
-
-    // Check if can rotate
-    for (let i = 1; i < clickedShip.length; i++) {
-        let nxtPlace = index + i * 10;
-        newShipIndexes.push(nxtPlace)
-        const tempShip = ships.find(ship => ship.index <= nxtPlace && (ship.index + ship.length) > nxtPlace);
-
-        if (nxtPlace >= 100 || tempShip){
-            isCanRotate = false;
-            break;
-        }
-    }
-    if (isCanRotate) {
+    // console.log(index, clickedShip)
+    if (isShipCanRotate(clickedShip, ships)) {
         // Rotate ship
-        console.log('ok', newShipIndexes)
+        // console.log('ok');
+        if (clickedShip.direction === Direction.COLUMN) {
+            $cells.eq(clickedShip.index).find('.ship').attr('direction', 'row');
+            clickedShip.direction = Direction.ROW;
+        } else {
+            $cells.eq(clickedShip.index).find('.ship').attr('direction', 'column');
+            clickedShip.direction = Direction.COLUMN;
+        }
     } else {
         // Warn if cant rotate
-        console.log('not ok')
+        // console.log('not ok');
         $cells.eq(index).addClass('warning');
         setTimeout(() => {
             $cells.eq(index).removeClass('warning');
         }, 1500);
     }
 })
+
+function isShipCanRotate(clickedShip: Ship, ships: Array<Ship>): boolean {
+    let isCanRotate: boolean = true;
+    const index = clickedShip.index;
+    // Check if can rotate
+    // if ship current direction is row
+    if (clickedShip.direction === Direction.ROW) { // check column direction
+        for (let i = 1; i < clickedShip.length; i++) {
+            let nxtPlace = index + i * 10;
+            if (nxtPlace >= 100) return false;
+            ships.forEach(ship => {
+                if (ship.status !== ShipStatus.INACTIVE || ship.id !== clickedShip.id) {
+                    if (ship.direction === Direction.COLUMN) {
+                        if (ship.index === nxtPlace) {
+                            isCanRotate = false;
+                            return;
+                        }
+                    } else {
+                        if (ship.index <= nxtPlace && (ship.index + ship.length) > nxtPlace) {
+                            isCanRotate = false;
+                            return;
+                        }
+                    }
+                }
+            })
+            if (!isCanRotate) return false;
+        }
+        // check row direction 
+    } else {
+        for (let i = 1; i < ships.length; i++) {
+            let nxtPlace = index + i;
+            ships.forEach(ship => {
+                if (ship.status !== ShipStatus.INACTIVE || ship.id !== clickedShip.id) {
+                    if (ship.direction === Direction.ROW) {
+                        if (ship.index === nxtPlace) {
+                            isCanRotate = false;
+                            return;
+                        }
+                    } else {
+                        for (let j = 0; j < ship.length; j++) {
+                            if (nxtPlace === (ship.index + j * 10)) {
+                                isCanRotate = false;
+                                return;
+                            }
+                        }
+                    }
+                }
+            })
+            if (!isCanRotate) return false;
+        }
+    }
+    return true;
+}
 
 // Replace ships to dropzone
 function replaceShipsToDropzone(ships: Array<Ship>): void {
@@ -186,14 +254,6 @@ function replaceShipsToDropzone(ships: Array<Ship>): void {
 
             let $cell = $cells.eq(index);
             if (direction == Direction.ROW) {
-                for (let i = 1; i < length; i++) {
-                    $cells.eq(index + i).remove();
-                }
-                $cell.css({
-                    gridColumnStart: index % 10 + 1,
-                    gridColumnEnd: index % 10 + length + 1
-                })
-
                 $cell.append(`
                 <div id="${ship.id}" class="ship" draggable="true" data-size="${ship.size}" direction="row">
                     <img src="../assets/imgs/${ship.id}.png" alt="">
@@ -201,10 +261,11 @@ function replaceShipsToDropzone(ships: Array<Ship>): void {
                 `)
             } else {
                 console.log(index, length, direction);
-                $cell.css({
-                    gridRowStart: Math.floor(index / 10) + 1,
-                    gridRowEnd: Math.floor(index / 10) + length + 1
-                })
+                $cell.append(`
+                <div id="${ship.id}" class="ship" draggable="true" data-size="${ship.size}" direction="column">
+                    <img src="../assets/imgs/${ship.id}.png" alt="">
+                </div>
+                `)
             }
         }
     }
