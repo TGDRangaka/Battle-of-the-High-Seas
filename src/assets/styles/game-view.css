@@ -139,6 +139,10 @@ header div {
     font-size: 28px;
 }
 
+.player-name{
+    font-size: 24px;
+}
+
 
 /* CSS */
 .button-82-pushable {
@@ -376,11 +380,9 @@ ul {
 }
 
 .cell .ship {
-    /* width: 100%; */
     position: absolute;
     height: 100%;
     width: 100%;
-    /* background-color :rgba(0, 255, 0, 0.377); */
     z-index: 1;
 }
 
@@ -403,7 +405,7 @@ ul {
 }
 
 .cell .ship img {
-    background-color :rgba(0, 255, 0, 0.377);
+    /* background-color :rgba(0, 255, 0, 0.377); */
     height: 100%;
     object-fit: cover;
 }

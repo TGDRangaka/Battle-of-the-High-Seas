@@ -1,7 +1,9 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, signInAnonymously } from "firebase/auth";
-import { child, get, getDatabase, ref, set, update } from "firebase/database";
+import { User, getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
+import { DataSnapshot, child, get, getDatabase, onValue, ref, set, update } from "firebase/database";
 import { Direction, Ship, ShipStatus } from "../models/Ship";
+import { Board } from "../models/Board";
+import { Player } from "../models/Player";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAL0AmcXBH1zr7EKL8pE3-Joge0Pxyljfg",
@@ -17,7 +19,6 @@ const firebaseConfig = {
 // Initialize Firebase
 initializeApp(firebaseConfig);
 const database = getDatabase();
-const auth = getAuth();
 
 // Get Room Id from URL
 const urlParams = new URLSearchParams(window.location.search);
@@ -25,54 +26,102 @@ let roomId: string | null = urlParams.get("roomId");
 console.log(roomId);
 
 // Sign in
-signInAnonymously(auth);
+const auth = getAuth();
+let userId: string;
+let userRef: any;
+const usersRef = ref(database, 'users');
+let userSnapshot: DataSnapshot;
 
-auth.onAuthStateChanged(user => {
+onAuthStateChanged(auth, async (user: User | null) => {
     if (user) {
-        console.log(user.uid);
+        userRef = ref(database, 'users/' + user.uid);
+        userId = user.uid;
+
+        try {
+            userSnapshot = await get(userRef);
+
+            if (!userSnapshot.exists()) {
+                // User is new, assign a name
+            } else {
+                // User is returning, fetch their name
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+        }
+
+        //   onDisconnect(userRef).remove();
     } else {
-        console.log("User not found");
+        // No user is signed in, sign in anonymously
+        signInAnonymously(auth).catch((error) => {
+            console.error('Error signing in anonymously:', error);
+        });
     }
-})
+});
 
+// Get Players Data
+let player: Player;
+let enemy: Player;
+
+const $dropzone = $("#dropzone");
+let $cells: JQuery<HTMLElement>;
 // Get Room Data
+const roomRef = ref(database, 'rooms/' + roomId);
 
-// Get Players Date
+onValue(roomRef, snapshot => {
+    console.log('room data');
+    console.log(snapshot.val());
+    const player1: Player = snapshot.val().player1
+    const player2: Player = snapshot.val().player2
+    if (player1.id === userId) {
+        console.log(player1);
+        player = player1;
+        enemy = player2;
+    } else {
+        player = player2;
+        enemy = player1;
+        console.log('Player 2');
+    }
+
+    createBoard(player.board);
+    $cells = $('.cells') as JQuery<HTMLElement>;
+    if($cells){
+        console.log("now ok cells");
+    }
+    setShips(player.ships);
+    replaceShipsToDropzone(player.ships);
+    $(".player .player-name").text(player.name);
+})
 
 // Create Boards
 
-// Creade Ships
-const ships: Array<Ship> = [
-    new Ship('ship-6-1', '6x1', 6, 71, ShipStatus.PLACED, [1, 1, 1, 1, 1, 1], Direction.ROW),
-    new Ship('ship-4-2', '4x1', 4, -1, ShipStatus.INACTIVE, [1, 1, 1, 1], Direction.ROW),
-    new Ship('ship-4-1', '4x1', 4, 23, ShipStatus.PLACED, [1, 1, 1, 1], Direction.COLUMN),
-    new Ship('ship-3-2', '3x1', 3, -1, ShipStatus.INACTIVE, [1, 1, 1], Direction.ROW),
-    new Ship('ship-3-1', '3x1', 3, -1, ShipStatus.INACTIVE, [1, 1, 1], Direction.ROW),
-    new Ship('ship-2-1', '2x1', 2, -1, ShipStatus.INACTIVE, [1, 1], Direction.ROW)
-];
+// Create ships
 
 // Set values ------------------------------------------------
 
 // set guide pane ships
-for (let ship of ships) {
-    // break;
-    if (ship.status === ShipStatus.INACTIVE) {
-        $(".guide-pane .ships").append(`
+function setShips(ships: Array<Ship>): void {
+    for (let ship of ships) {
+        // break;
+        if (ship.status === ShipStatus.INACTIVE) {
+            $(".guide-pane .ships").append(`
         <div id="${ship.id}" class="ship" draggable="true" data-size="${ship.size}" direaction="column">
             <img src="../assets/imgs/${ship.id}.png" alt="">
         </div>
     `)
+        }
+        $('.fleet .ships').append(`
+    <div id="${ship.id}" class="ship" draggable="true" data-size="${ship.size}" direaction="column">
+        <img src="../assets/imgs/${ship.id}.png" alt="">
+    </div>
+    `)
     }
-
 }
 
-
-
-const $dropzone = $("#dropzone");
-for (let i = 0; i < 100; i++) {
-    $dropzone.append(`<div data-index="${i}" class="cell"></div>`);
+function createBoard(board: Board): void {
+    for (let i = 0; i < 100; i++) {
+        $dropzone.append(`<div data-index="${i}" class="cell"></div>`);
+    }
 }
-const $cells = $(".cell");
 
 // Drag and Drop ships ----------------------------------------------
 
@@ -80,7 +129,7 @@ let $selectedShip: any = null;
 
 $(".guide-pane, #dropzone").on("dragstart", '.ship', function (e: JQuery.TriggeredEvent) {
     $selectedShip = $(this);
-    const ship = ships.find(ship => ship.id === $selectedShip.attr("id"));
+    const ship = player.ships.find(ship => ship.id === $selectedShip.attr("id"));
     if (!ship) return false;
     const shipSize = ($(this).data("size") as string).split("x");
     const shipLength = parseInt(shipSize[0]);
@@ -113,9 +162,9 @@ $(".guide-pane, #dropzone").on("dragstart", '.ship', function (e: JQuery.Trigger
     });
 });
 
-$cells.on('drop', function (e) {
+$cells!.on('drop', function (e) {
     const index = $(this).data("index");
-    const ship = ships.find(ship => ship.id === $selectedShip.attr('id'));
+    const ship = player.ships.find(ship => ship.id === $selectedShip.attr('id'));
     if (!ship) return;
 
     if (isShipCanPlace(index, ship)) {
@@ -125,11 +174,10 @@ $cells.on('drop', function (e) {
         $(this).prepend($selectedShip);
 
         // update ship status
-        const ship = ships.find(ship => ship.id === $selectedShip.attr("id"));
+        const ship = player.ships.find(ship => ship.id === $selectedShip.attr("id"));
         if (ship) {
             ship.index = index;
             ship.status = ShipStatus.PLACED;
-            console.log(ship);
         }
         return;
     }
@@ -145,9 +193,9 @@ function isShipCanPlace(index: number, ship: Ship): boolean {
     // if ship direction row
     if (ship.direction === Direction.ROW) {
         if (startX + ship.length > 10) return false;
-        l1:for (let i = 0; i < ship.length; i++) {
+        l1: for (let i = 0; i < ship.length; i++) {
             let currentIndex = index + i;
-            for(let otherShip of ships) {
+            for (let otherShip of player.ships) {
                 if (otherShip.status !== ShipStatus.INACTIVE && otherShip.id !== ship.id) {
                     if (otherShip.direction === Direction.ROW) {
                         if (otherShip.index === currentIndex) {
@@ -165,12 +213,12 @@ function isShipCanPlace(index: number, ship: Ship): boolean {
                 }
             }
         }
-        if(!isCanPlace) return false;
+        if (!isCanPlace) return false;
     } else {
         if (startY + ship.length > 10) return false;
-        l1:for (let i = 0; i < ship.length; i++) {
+        l1: for (let i = 0; i < ship.length; i++) {
             let currentIndex = index + i * 10;
-            for(let otherShip of ships) {
+            for (let otherShip of player.ships) {
                 if (otherShip.status !== ShipStatus.INACTIVE && otherShip.id !== ship.id) {
                     if (otherShip.direction === Direction.COLUMN) {
                         if (otherShip.index === currentIndex) {
@@ -188,18 +236,18 @@ function isShipCanPlace(index: number, ship: Ship): boolean {
                 }
             }
         }
-        if(!isCanPlace) return false;
+        if (!isCanPlace) return false;
     }
     return true;
 }
 
 // Rotate the placed ship
-$cells.on('click', function (): void {
+$cells!.on('click', function (): void {
     const index = $(this).data("index");
-    const clickedShip = ships.find(ship => ship.index === index);
+    const clickedShip = player.ships.find(ship => ship.index === index);
     if (!clickedShip) return;
     // console.log(index, clickedShip)
-    if (isShipCanRotate(clickedShip, ships)) {
+    if (isShipCanRotate(clickedShip, player.ships)) {
         // Rotate ship
         // console.log('ok');
         if (clickedShip.direction === Direction.COLUMN) {
@@ -276,6 +324,7 @@ function isShipCanRotate(clickedShip: Ship, ships: Array<Ship>): boolean {
 
 // Replace ships to dropzone
 function replaceShipsToDropzone(ships: Array<Ship>): void {
+    console.log("replacing ships");
     // place placed ships to grid
     for (let ship of ships) {
         if (ship.index != -1 && ship.status != ShipStatus.INACTIVE) {
@@ -283,7 +332,6 @@ function replaceShipsToDropzone(ships: Array<Ship>): void {
             const direction = ship.direction;
 
             let $cell = $cells.eq(index);
-            console.log(ship);
             if (direction == Direction.ROW) {
                 $cell.append(`
                 <div id="${ship.id}" class="ship" draggable="true" data-size="${ship.size}" direction="row">
@@ -300,5 +348,3 @@ function replaceShipsToDropzone(ships: Array<Ship>): void {
         }
     }
 }
-
-replaceShipsToDropzone(ships);
