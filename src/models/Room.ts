@@ -2,8 +2,7 @@ import { Player } from "./Player";
 
 export class Room {
     roomId: number;
-    player1: Player;
-    player2: Player | null;
+    players: Map<string, Player>;
     status: RoomStatus;
     mode: Mode;
     difficulty: Difficulty;
@@ -11,16 +10,14 @@ export class Room {
 
     constructor(
         roomId: number,
-        player1: Player,
-        player2: Player | null,
+        players: Map<string, Player>,
         status: RoomStatus,
         mode: Mode,
         difficulty: Difficulty,
         turn: string
     ) {
         this.roomId = roomId;
-        this.player1 = player1;
-        this.player2 = player2;
+        this.players = players
         this.status = status;
         this.mode = mode;
         this.difficulty = difficulty;
@@ -30,7 +27,7 @@ export class Room {
 
 export enum RoomStatus{
     WAITING = 'waiting',
-    ONGOING = 'ongoing',
+    PLAYING = 'playing',
     FINISHED = 'finished'
 }
 

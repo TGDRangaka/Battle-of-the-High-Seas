@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInAnonymously, User } from "firebase/auth";
 import { child, get, getDatabase, onChildAdded, onDisconnect, onValue, ref, set, update, DataSnapshot } from "firebase/database";
 import { Room, RoomStatus, Mode, Difficulty } from "./models/Room";
-import { Player } from "./models/Player";
+import { Player, PlayerState } from "./models/Player";
 import { Board } from "./models/Board";
 import { Direction, Ship, ShipStatus } from "./models/Ship";
 
@@ -20,36 +20,55 @@ const firebaseConfig = {
 // Initialize Firebase
 initializeApp(firebaseConfig);
 const database = getDatabase();
-
 const auth = getAuth();
+
 let userId: string;
 let userRef: any;
 const usersRef = ref(database, 'users');
-let userSnapshot: DataSnapshot;
 
+interface UserInfo {
+    userId: string;
+    playerName: string;
+}
+
+// Listen for changes to the list of users
 onAuthStateChanged(auth, async (user: User | null) => {
+    onValue(usersRef, (snapshot) => {
+        console.log('onvalue')
+        if (snapshot.exists()) {
+            const users = snapshot.val();
+            const numberOfUsers = users ? Object.keys(users).length : 0;
+            $('.count').text(numberOfUsers);
+        } else {
+            $('.count').text(0);
+        }
+    });
     if (user) {
         userRef = ref(database, 'users/' + user.uid);
         userId = user.uid;
 
         try {
-            userSnapshot = await get(userRef);
-
-            if (!userSnapshot.exists()) {
-                // User is new, assign a name
-                const playerName = generateRandomName();
+            const userInfo = getUserInfo();
+            // check user in local storage
+            if(userInfo?.userId === userId){
+                // Returning user, fetch their name
+                const playerName = userInfo.playerName;
                 await set(userRef, { name: playerName });
-                console.log('New user, assigned name:', playerName);
-            } else {
-                // User is returning, fetch their name
-                const playerName: string = userSnapshot.val().name;
                 console.log('Returning user, name:', playerName);
+            } else {
+                // New user, assign a name
+                const playerName = generateRandomName();
+                const createdUserInfo:UserInfo = {userId, playerName}
+                console.log('New user, assigned name:', playerName);
+                saveUserInfo(createdUserInfo);
             }
+
+            // Set up onDisconnect to remove the user when they go offline
+            onDisconnect(userRef).remove();
+
         } catch (error) {
             console.error('Error fetching user data:', error);
         }
-
-        //   onDisconnect(userRef).remove();
     } else {
         // No user is signed in, sign in anonymously
         signInAnonymously(auth).catch((error) => {
@@ -58,21 +77,16 @@ onAuthStateChanged(auth, async (user: User | null) => {
     }
 });
 
-onValue(usersRef, (snapshot) => {
-    const users = snapshot.val();
-    const numberOfUsers = users ? Object.keys(users).length : 0;
-    $('.count').text(numberOfUsers);
-    // You can add additional logic to handle the number of users here
-});
+// Save user info to localStorage
+function saveUserInfo(userInfo: UserInfo) {
+    localStorage.setItem('userInfo', JSON.stringify(userInfo));
+}
 
-onChildAdded(usersRef, snapshot => {
-    const userData = snapshot.val();
-    console.log('New player joined:', userData);
-})
-
-
-
-let createdRoomId: number = 0;
+// Retrieve user info from localStorage
+function getUserInfo(): UserInfo | null {
+    const userInfoStr = localStorage.getItem('userInfo');
+    return userInfoStr ? JSON.parse(userInfoStr) : null;
+}
 
 // Create a room
 $("#createRoomBtn").on('click', async function () {
@@ -86,25 +100,32 @@ $("#createRoomBtn").on('click', async function () {
                 // Create room, players, boards
 
                 const ships: Array<Ship> = [
-                    new Ship('ship-6-1', '6x1', 6, -1, ShipStatus.PLACED, [1, 1, 1, 1, 1, 1], Direction.ROW),
+                    new Ship('ship-6-1', '6x1', 6, -1, ShipStatus.INACTIVE, [1, 1, 1, 1, 1, 1], Direction.ROW),
                     new Ship('ship-4-2', '4x1', 4, -1, ShipStatus.INACTIVE, [1, 1, 1, 1], Direction.ROW),
-                    new Ship('ship-4-1', '4x1', 4, -1, ShipStatus.PLACED, [1, 1, 1, 1], Direction.ROW),
+                    new Ship('ship-4-1', '4x1', 4, -1, ShipStatus.INACTIVE, [1, 1, 1, 1], Direction.ROW),
                     new Ship('ship-3-2', '3x1', 3, -1, ShipStatus.INACTIVE, [1, 1, 1], Direction.ROW),
                     new Ship('ship-3-1', '3x1', 3, -1, ShipStatus.INACTIVE, [1, 1, 1], Direction.ROW),
                     new Ship('ship-2-1', '2x1', 2, -1, ShipStatus.INACTIVE, [1, 1], Direction.ROW)
                 ];
+                const players: Map<string, Player> = new Map();
+                players.set(userId, new Player(userId, userSnapshot.val().name, new Board(10), ships, PlayerState.NOT_READY))
                 const room: Room = new Room(
                     roomId,
-                    new Player(userId, userSnapshot.val().name, new Board(10), ships),
-                    null,
+                    players,
                     RoomStatus.WAITING,
                     Mode.DEFAULT,
                     Difficulty.DEFAULT,
                     userId
                 );
 
-                await set(ref(database, 'rooms/' + roomId), room).then(() => {
-                    console.log('Room Created', room)
+                // Convert the Room object to a serializable object
+                const roomData = {
+                    ...room,
+                    players: mapToObject(room.players)
+                };
+
+                await set(ref(database, 'rooms/' + roomId), roomData).then(() => {
+                    console.log('Room Created', roomData);
                     isRoomCreated = true;
 
                     goToRoom(roomId.toString());
@@ -117,7 +138,7 @@ $("#createRoomBtn").on('click', async function () {
 });
 
 
-$("#submitCode").click(() => {
+$("#submitCode").click(async () => {
     let roomId: number = parseInt($("#roomIdInput").val() + "");
     console.log(roomId);
     if (!roomId || roomId >= 10000 || roomId <= 999) {
@@ -125,23 +146,56 @@ $("#submitCode").click(() => {
         return;
     }
 
-    get(child(ref(database), 'rooms/' + roomId)).then(room => {
-        if (room.exists()) {
+    const snapshot = await get(child(ref(database), 'rooms/' + roomId));
+    if (snapshot.exists()) {
+        const roomData: Room = snapshot.val();
+        const playersObj = roomData.players || {};
+        const playersMap = new Map<string, Player>(Object.entries(playersObj));
 
-            update(ref(database, 'rooms/' + roomId), {
-                status: generateRandomName()
-            }).then(() => {
-                console.log("Room updated successfully!");
-                $("#roomIdInput").val("")
-                goToRoom(roomId.toString());
-            }).catch(err => {
-                console.error("Error updating room:", err.message);
-            });
+        // Check the number of players in the room
+        if (playersMap.size < 2) {
+            // Add the new player to the room
+            const ships: Array<Ship> = [
+                new Ship('ship-6-1', '6x1', 6, -1, ShipStatus.INACTIVE, [1, 1, 1, 1, 1, 1], Direction.ROW),
+                new Ship('ship-4-2', '4x1', 4, -1, ShipStatus.INACTIVE, [1, 1, 1, 1], Direction.ROW),
+                new Ship('ship-4-1', '4x1', 4, -1, ShipStatus.INACTIVE, [1, 1, 1, 1], Direction.ROW),
+                new Ship('ship-3-2', '3x1', 3, -1, ShipStatus.INACTIVE, [1, 1, 1], Direction.ROW),
+                new Ship('ship-3-1', '3x1', 3, -1, ShipStatus.INACTIVE, [1, 1, 1], Direction.ROW),
+                new Ship('ship-2-1', '2x1', 2, -1, ShipStatus.INACTIVE, [1, 1], Direction.ROW)
+            ];
+            const newPlayer = new Player(userId, userSnapshot.val().name, new Board(10), ships, PlayerState.NOT_READY);
+
+            playersMap.set(newPlayer.id, newPlayer);
+
+            // Convert the updated Map to a plain object
+            const updatedRoomData = {
+                ...roomData,
+                players: mapToObject(playersMap)
+            };
+
+            // Save the updated room data back to Firebase
+            update(child(ref(database), 'rooms/' + roomId), updatedRoomData)
+                .then(() => {
+                    console.log("Player Added & updated room")
+                    goToRoom(roomId.toString());
+                }).catch(err => console.log("Error adding player to room", err));
         } else {
-            console.log("Room doesn't exist");
+            console.log('Room is already full.');
         }
-    }).catch(err => console.log(err));
+
+    } else {
+        console.log("Room doesn't exist");
+    }
 });
+
+// Function to convert Map to an object
+function mapToObject(map: Map<string, Player>): { [key: string]: Player } {
+    const obj: { [key: string]: Player } = {};
+    map.forEach((value, key) => {
+        obj[key] = value;
+    });
+    return obj;
+}
 
 let isPopopOpened: boolean = false;
 // Join a room
