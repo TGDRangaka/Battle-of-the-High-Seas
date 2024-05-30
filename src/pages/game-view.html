@@ -19,7 +19,7 @@
 <body>
 
     <!-- Showing enemy/your fleet include health -->
-    <aside class="">
+    <aside class="hidden">
         <div class="fleet player1-fleet">
             <div class="fleet-info">
                 <div class="fleet-name">Your Fleet</div>
@@ -46,7 +46,7 @@
                 <div class="duration">
                     <span>00:00</span>
                 </div>
-                <span id="roomId">ROOM ID #____</span>
+                <span id="roomId">ROOM ID #%^*@</span>
             </div>
 
             <div class="player-info enemy">
@@ -62,7 +62,7 @@
         </header>
         <!-- Boards / Battlefields -->
         <section>
-            <div class="board-area left">
+            <div id="player-board" class="board-area left">
                 <span class="bg"></span>
                 <div class="board" id="dropzone"></div>
                 
@@ -84,10 +84,9 @@
                 </ul>
             </div>
 
-            <div class="board-area right d-none">
+            <div id="enemy-board" class="board-area right d-none">
                 <span class="bg"></span>
                 <div class="board">
-                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
                 </div>
                 <div class="number-row">
                     <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
@@ -101,7 +100,7 @@
 
     </main>
     <!-- Showing enemy/your fleet include health -->
-    <aside class="">
+    <aside class="hidden">
         <div class="fleet player2-fleet">
             <div class="fleet-info">
                 <div class="fleet-name">Enemy Fleet</div>

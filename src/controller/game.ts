@@ -2,9 +2,10 @@ import { initializeApp } from "firebase/app";
 import { User, getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
 import { DataSnapshot, child, get, getDatabase, onChildAdded, onValue, ref, set, update } from "firebase/database";
 import { Direction, Ship, ShipStatus } from "../models/Ship";
-import { Board } from "../models/Board";
+import { Board, Cell } from "../models/Board";
 import { Player, PlayerState } from "../models/Player";
 import { Room, RoomStatus } from "../models/Room";
+import { GameStat } from "../models/GameStat";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAL0AmcXBH1zr7EKL8pE3-Joge0Pxyljfg",
@@ -63,6 +64,7 @@ onAuthStateChanged(auth, async (user: User | null) => {
 let playerRef;
 let player: Player;
 let enemy: Player;
+let room: Room;
 
 const $dropzone = $("#dropzone");
 
@@ -76,7 +78,7 @@ const roomRef = ref(database, 'rooms/' + roomId);
 
 get(roomRef).then(snapshot => {
     if (snapshot.exists()) {
-        const room: Room = snapshot.val();
+        room = snapshot.val();
         const players = new Map<string, Player>(Object.entries(room.players || {}));
 
         console.log("Room get successfuly")
@@ -109,18 +111,32 @@ onChildAdded(ref(database, `rooms/${roomId}/players`), snapshot => {
     }
 })
 
-onValue(ref(database, `rooms/${roomId}/players`), snapshot => {
+let isStartedGame = false;
+
+onValue(ref(database, `rooms/${roomId}/players`), async snapshot => {
+    const room = await get(roomRef);
+    if (room.val().status !== RoomStatus.WAITING) {
+        // Update UI
+        $(".guide-pane").hide();
+        $(".board-area + .right").show();
+        $("aside").removeClass("hidden");
+        $(".player-info button").hide();
+        $("#dropzone .ship[draggable='true']").attr('draggable', 'false');
+        $("#dropzone .ship").css('zIndex', '-1');
+        console.log("start >>>")
+        !isStartedGame && startGame();
+        return;
+    }
     const playersMap = new Map<string, Player>(Object.entries(snapshot.val() || {}));
     let isPlayersAreReady: [boolean, boolean] = [false, false];
     playersMap.forEach((player, key) => {
-        console.log("some value changed", key);
         // player action
         if (key === userId) {
-            player.state === PlayerState.READY && (isPlayersAreReady[0] = true);
+            player.state !== PlayerState.NOT_READY && (isPlayersAreReady[0] = true);
         }
         // enemy action
         else {
-            player.state === PlayerState.READY && $(".enemy button").prop("disabled", false) && (isPlayersAreReady[1] = true);
+            player.state !== PlayerState.NOT_READY && $(".enemy button").prop("disabled", false) && (isPlayersAreReady[1] = true);
         }
     })
 
@@ -128,9 +144,27 @@ onValue(ref(database, `rooms/${roomId}/players`), snapshot => {
     if (isPlayersAreReady[0] && isPlayersAreReady[1]) {
         console.log("Both Players are ready");
         //TODO
-        update(roomRef,{status: RoomStatus.PLAYING}).then(() =>{
+        update(roomRef, { status: RoomStatus.PLAYING }).then(() => {
+            isStartedGame = true;
+            // Update UI
+            $(".guide-pane").hide();
+            $(".board-area + .right").show();
+            $("aside").removeClass("hidden");
+            $(".player-info button").hide();
+            $("#dropzone .ship[draggable='true']").attr('draggable', 'false');
+            $("#dropzone .ship").css('zIndex', '-1');
 
-        }).catch(err => console.log("error updating room status to playing",err));
+            // Update player state as playing
+            player.state = PlayerState.PLAYING;
+            update(playerRef!, player);
+
+            // Update database board
+            updateBoard();
+
+            // Start game
+            console.log("start -->")
+            startGame();
+        }).catch(err => console.log("error updating room status to playing", err));
     }
 })
 
@@ -138,17 +172,16 @@ onValue(ref(database, `rooms/${roomId}/players`), snapshot => {
 let $selectedShip: any = null;
 function buildPlayground(): void {
     $(".guide-pane, #dropzone").on("dragstart", '.ship', function (e: JQuery.TriggeredEvent) {
+        if (room.status !== RoomStatus.WAITING) return;
         $selectedShip = $(this);
         const ship = player.ships.find(ship => ship.id === $selectedShip.attr("id"));
         if (!ship) return false;
-        console.log(ship);
         const shipSize = ($(this).data("size") as string).split("x");
         const shipLength = parseInt(shipSize[0]);
 
         $dropzone.on("dragover", '.cell', function (e: JQuery.TriggeredEvent) {
             e.preventDefault();
             let index: number = $('.cell').index(this);
-            console.log(index);
 
             let placingCells: number[] = [];
             for (let i = 0; i < shipLength; i++) {
@@ -170,8 +203,8 @@ function buildPlayground(): void {
     });
 
     $dropzone.on('drop', '.cell', function (e) {
+        if (room.status !== RoomStatus.WAITING) return;
         const index = $(this).data("index");
-        console.log('dropped', index);
         const ship = player.ships.find(ship => ship.id === $selectedShip.attr('id'));
         if (!ship) return;
 
@@ -193,9 +226,7 @@ function buildPlayground(): void {
                 } else {
                     $(".player button").prop("disabled", true);
                 }
-                update(playerRef!, player).then(() => {
-                    console.log("ships updated");
-                }).catch(err => console.log("error while updating ships", err));
+                update(playerRef!, player).catch(err => console.log("error while updating ships", err));
             }
             return;
         }
@@ -206,8 +237,8 @@ function buildPlayground(): void {
 
     // Rotate the placed ship
     $dropzone.on('click', '.cell', function (): void {
+        if (room.status !== RoomStatus.WAITING) return;
         const index = $(this).data("index");
-        console.log('clicked', index);
         const clickedShip = player.ships.find(ship => ship.index === index);
         if (!clickedShip) return;
         // console.log(index, clickedShip)
@@ -225,8 +256,6 @@ function buildPlayground(): void {
             // update player ships database
             update(playerRef!, {
                 ships: player.ships
-            }).then(() => {
-                console.log("ships updated");
             }).catch(err => console.log("error while updating ships", err));
         } else {
             // Warn if cant rotate
@@ -272,12 +301,12 @@ function setShips(ships: Array<Ship>): void {
 }
 
 function createBoard(board: Board): void {
-    const cellsCount:number = board.size * board.size;
+    const cellsCount: number = board.size * board.size;
     for (let i = 0; i < cellsCount; i++) {
         $dropzone.append(`<div data-index="${i}" class="cell"></div>`);
+        $("#enemy-board .board").append(`<div data-index="${i}" class="cell"></div>`);
     }
 }
-
 
 function isShipCanPlace(index: number, ship: Ship): boolean {
     let startX: number = index % 10;
@@ -419,4 +448,136 @@ function replaceShipsToDropzone(ships: Array<Ship>): void {
     } else {
         $(".player button").prop("disabled", true);
     }
+}
+
+// Update database boards
+function updateBoard(): void {
+    player.ships.map(ship => {
+        const index = ship.index;
+        const direction = ship.direction;
+
+        if (direction === Direction.ROW) {
+            for (let i = 0; i < ship.length; i++) {
+                player.board.grid[index + i].inside = ship.id;
+            }
+        } else {
+            for (let i = 0; i < ship.length; i++) {
+                player.board.grid[index + i * 10].inside = ship.id;
+            }
+        }
+    });
+}
+
+
+
+
+
+// Game start
+async function startGame() {
+    isStartedGame = true;
+
+    // Add game stat model
+    get(child(ref(database), `rooms/${roomId}/gameStat`)).then(gameStat => {
+        if (gameStat.exists()) return;
+        update(roomRef, { gameStat: new GameStat(false, null, -1) }).then(() => {
+            console.log("game stat added to room")
+        }).catch(err => console.error("Error while adding game stat", err));
+    })
+
+
+    console.log("game started");
+
+    // refereces
+    const turnRef = ref(database, `rooms/${roomId}/turn`);
+    const gameStatRef = ref(database, `rooms/${roomId}/gameStat`);
+    const isHaveWinnerRef = ref(database, `rooms/${roomId}/gameStat/isHaveWinner`);
+    const selectedCellRef = ref(database, `rooms/${roomId}/gameStat/selectedCell`);
+    const enemyBoardRef = ref(database, `rooms/${roomId}/players/${enemy.id}/board/grid`);
+    const playerBoardRef = ref(database, `rooms/${roomId}/players/${player.id}/board/grid`);
+
+    let enemyBoardSnapshot: DataSnapshot = await get(ref(database, `rooms/${roomId}/players/${enemy.id}/board/grid`));
+    let enemyBoard: Array<Cell> = enemyBoardSnapshot.val();
+    let myBoardSnapshot: DataSnapshot = await get(ref(database, `rooms/${roomId}/players/${player.id}/board/grid`));
+    let myBoard: Array<Cell> = myBoardSnapshot.val();
+    let turnSnapshot: DataSnapshot = await get(ref(database, `rooms/${roomId}/turn`));
+
+    onValue(turnRef, snapshot => {
+        // snapshot.val();
+        $("#enemy-board .board").on('click', '.cell', function () {
+            if (snapshot.val() === player.id) {
+                const clickedIndex = $(this).index();
+                console.log(clickedIndex);
+                if (enemyBoard[clickedIndex].isHit) return;
+
+                update(gameStatRef, { selectedCell: clickedIndex })
+            }
+        })
+    });
+
+    // listen to selected cell index
+    onValue(selectedCellRef, async snapshot => {
+        const selectedCell = snapshot.val();
+        if (selectedCell == -1) return;
+        // I attacked
+        if (turnSnapshot.val() === player.id) {
+
+        } else {  // Enemy attacked me
+            const shotCell = player.board.grid[selectedCell];
+            console.log('shot cell', shotCell);
+            // update ship (health, status)
+            player.board.grid[selectedCell].isHit = true;
+            if (shotCell.inside !== 'empty') {
+                let i = player.ships.findIndex(ship => ship.id === shotCell.inside);
+                if (!player.ships[i]) return;
+                console.log('attacked ship', player.ships[i]);
+                if (player.ships[i].health > 1) {
+                    player.ships[i].health = player.ships[i].health - 1;
+                    player.ships[i].status = ShipStatus.DAMAGED;
+                } else {
+                    player.ships[i].health = 0;
+                    player.ships[i].status = ShipStatus.DESTROYED;
+                }
+            }
+            // player.board.grid = myBoard;
+            await update(playerRef!, player);
+            console.log('shot cell  update', player);
+        }
+
+
+    })
+    // update my grid ui
+    onValue(playerBoardRef, snapshot => {
+        if (turnSnapshot.val() === player.id) return;
+        myBoard = snapshot.val();
+        console.log('updated my grid--');
+        myBoard.map((cell, i) => {
+            if (cell.isHit) {
+                console.log("hit one", i);
+                $("#player-board .board .cell").eq(i).html(
+                    cell.inside === 'empty'
+                        ? `<img src="../assets/imgs/missed-shot.png" alt="missed"/>`
+                        : `<img src="../assets/imgs/player-ship-fire.gif" alt="fire"/>`
+                )
+            }
+        })
+    })
+
+    // Update enemy grid ui
+    onValue(enemyBoardRef, snapshot => {
+        if (turnSnapshot.val() !== player.id) return;
+        enemyBoard = snapshot.val();
+        console.log('updated enemy grid--');
+        enemyBoard.map((cell, i) => {
+            if (cell.isHit) {
+                console.log("hit one", i);
+                $("#enemy-board .board .cell").eq(i).html(
+                    cell.inside === 'empty'
+                        ? `<img src="../assets/imgs/missed-shot.png" alt="missed"/>`
+                        : `<img src="../assets/imgs/fire.gif" alt="fire"/>`
+                )
+            }
+        })
+    })
+
+
 }

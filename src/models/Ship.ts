@@ -4,7 +4,7 @@ export class Ship {
     length: number;
     index: number;
     status: ShipStatus;
-    health: number[];
+    health: number;
     direction: Direction;
 
     constructor(
@@ -13,7 +13,7 @@ export class Ship {
         length: number,
         index: number,
         status: ShipStatus,
-        health: number[],
+        health: number,
         direction: Direction
     ) {
         this.id = id;

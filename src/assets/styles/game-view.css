@@ -42,7 +42,6 @@ body {
 /* /////////////////////////////////////////////////////////// */
 
 aside {
-    /* width: 290px; */
     /* border: 1px solid blue; */
     height: 100vh;
     display: flex;
@@ -372,6 +371,10 @@ section {
     display: none;
 }
 
+.hidden{
+    opacity: 0;
+}
+
 .guide-pane{
     /* border: 1px solid red; */
     padding: 10px;
@@ -428,3 +431,26 @@ ul {
     height: 100%;
     object-fit: cover;
 }
+
+/* Enemy cells */
+#enemy-board .board{
+    overflow: hidden;
+}
+
+#enemy-board .board .cell{
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.board .cell > img{
+    width: 100%;
+    aspect-ratio:1;
+    mix-blend-mode: screen;
+}
+
+#enemy-board .board .cell:hover{
+    background-color: rgba(0, 13, 134, 0.521);
+}
+

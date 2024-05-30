@@ -24,17 +24,13 @@ const auth = getAuth();
 
 let userId: string;
 let userRef: any;
+let playerName: string;
 const usersRef = ref(database, 'users');
 
-interface UserInfo {
-    userId: string;
-    playerName: string;
-}
 
 // Listen for changes to the list of users
 onAuthStateChanged(auth, async (user: User | null) => {
     onValue(usersRef, (snapshot) => {
-        console.log('onvalue')
         if (snapshot.exists()) {
             const users = snapshot.val();
             const numberOfUsers = users ? Object.keys(users).length : 0;
@@ -48,19 +44,19 @@ onAuthStateChanged(auth, async (user: User | null) => {
         userId = user.uid;
 
         try {
-            const userInfo = getUserInfo();
+            const userInfo = getUserInfo(userId);
             // check user in local storage
-            if(userInfo?.userId === userId){
+            if (userInfo) {
                 // Returning user, fetch their name
-                const playerName = userInfo.playerName;
+                playerName = userInfo;
                 await set(userRef, { name: playerName });
                 console.log('Returning user, name:', playerName);
             } else {
                 // New user, assign a name
-                const playerName = generateRandomName();
-                const createdUserInfo:UserInfo = {userId, playerName}
+                playerName = generateRandomName();
+                await set(userRef, { name: playerName });
                 console.log('New user, assigned name:', playerName);
-                saveUserInfo(createdUserInfo);
+                saveUserInfo(userId, playerName);
             }
 
             // Set up onDisconnect to remove the user when they go offline
@@ -78,14 +74,14 @@ onAuthStateChanged(auth, async (user: User | null) => {
 });
 
 // Save user info to localStorage
-function saveUserInfo(userInfo: UserInfo) {
-    localStorage.setItem('userInfo', JSON.stringify(userInfo));
+function saveUserInfo(userId: string, playerName: string) {
+    localStorage.setItem(userId, playerName);
 }
 
 // Retrieve user info from localStorage
-function getUserInfo(): UserInfo | null {
-    const userInfoStr = localStorage.getItem('userInfo');
-    return userInfoStr ? JSON.parse(userInfoStr) : null;
+function getUserInfo(userId: string): string | null {
+    const userInfoStr = localStorage.getItem(userId);
+    return userInfoStr ? userInfoStr : null;
 }
 
 // Create a room
@@ -100,15 +96,15 @@ $("#createRoomBtn").on('click', async function () {
                 // Create room, players, boards
 
                 const ships: Array<Ship> = [
-                    new Ship('ship-6-1', '6x1', 6, -1, ShipStatus.INACTIVE, [1, 1, 1, 1, 1, 1], Direction.ROW),
-                    new Ship('ship-4-2', '4x1', 4, -1, ShipStatus.INACTIVE, [1, 1, 1, 1], Direction.ROW),
-                    new Ship('ship-4-1', '4x1', 4, -1, ShipStatus.INACTIVE, [1, 1, 1, 1], Direction.ROW),
-                    new Ship('ship-3-2', '3x1', 3, -1, ShipStatus.INACTIVE, [1, 1, 1], Direction.ROW),
-                    new Ship('ship-3-1', '3x1', 3, -1, ShipStatus.INACTIVE, [1, 1, 1], Direction.ROW),
-                    new Ship('ship-2-1', '2x1', 2, -1, ShipStatus.INACTIVE, [1, 1], Direction.ROW)
+                    // new Ship('ship-6-1', '6x1', 6, -1, ShipStatus.INACTIVE, 6, Direction.ROW),
+                    // new Ship('ship-4-2', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
+                    // new Ship('ship-4-1', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
+                    // new Ship('ship-3-2', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
+                    new Ship('ship-3-1', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
+                    new Ship('ship-2-1', '2x1', 2, -1, ShipStatus.INACTIVE, 2, Direction.ROW)
                 ];
                 const players: Map<string, Player> = new Map();
-                players.set(userId, new Player(userId, userSnapshot.val().name, new Board(10), ships, PlayerState.NOT_READY))
+                players.set(userId, new Player(userId, playerName, new Board(10), ships, PlayerState.NOT_READY))
                 const room: Room = new Room(
                     roomId,
                     players,
@@ -156,14 +152,14 @@ $("#submitCode").click(async () => {
         if (playersMap.size < 2) {
             // Add the new player to the room
             const ships: Array<Ship> = [
-                new Ship('ship-6-1', '6x1', 6, -1, ShipStatus.INACTIVE, [1, 1, 1, 1, 1, 1], Direction.ROW),
-                new Ship('ship-4-2', '4x1', 4, -1, ShipStatus.INACTIVE, [1, 1, 1, 1], Direction.ROW),
-                new Ship('ship-4-1', '4x1', 4, -1, ShipStatus.INACTIVE, [1, 1, 1, 1], Direction.ROW),
-                new Ship('ship-3-2', '3x1', 3, -1, ShipStatus.INACTIVE, [1, 1, 1], Direction.ROW),
-                new Ship('ship-3-1', '3x1', 3, -1, ShipStatus.INACTIVE, [1, 1, 1], Direction.ROW),
-                new Ship('ship-2-1', '2x1', 2, -1, ShipStatus.INACTIVE, [1, 1], Direction.ROW)
-            ];
-            const newPlayer = new Player(userId, userSnapshot.val().name, new Board(10), ships, PlayerState.NOT_READY);
+                // new Ship('ship-6-1', '6x1', 6, -1, ShipStatus.INACTIVE, 6, Direction.ROW),
+                // new Ship('ship-4-2', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
+                // new Ship('ship-4-1', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
+                // new Ship('ship-3-2', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
+                new Ship('ship-3-1', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
+                new Ship('ship-2-1', '2x1', 2, -1, ShipStatus.INACTIVE, 2, Direction.ROW)
+            ]
+            const newPlayer = new Player(userId, playerName, new Board(10), ships, PlayerState.NOT_READY);
 
             playersMap.set(newPlayer.id, newPlayer);
 
