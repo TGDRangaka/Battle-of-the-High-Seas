@@ -41,11 +41,11 @@ onAuthStateChanged(auth, async (user: User | null) => {
         try {
             userSnapshot = await get(userRef);
 
-            // if (!userSnapshot.exists()) {
+            if (!userSnapshot.exists()) {
             //     // User is new, assign a name
-            // } else {
+            } else {
             //     // User is returning, fetch their name
-            // }
+            }
         } catch (error) {
             console.error('Error fetching user data:', error);
         }
