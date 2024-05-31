@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle of the High Seas</title>
+
+
+    <!-- fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Jura:wght@300..700&family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+        rel="stylesheet">
+  <script type="module" crossorigin src="/Battle-of-the-High-Seas/assets/game-C8IdCmgG.js"></script>
+  <link rel="modulepreload" crossorigin href="/Battle-of-the-High-Seas/assets/Ship-BgBp64_2.js">
+  <link rel="stylesheet" crossorigin href="/Battle-of-the-High-Seas/assets/game-CJQf41P3.css">
+</head>
+
+<body>
+
+    <!-- Showing enemy/your fleet include health -->
+    <aside class="hidden">
+        <div class="fleet player1-fleet">
+            <div class="fleet-info">
+                <div class="fleet-name">Your Fleet</div>
+            </div>
+            <div class="ships">
+            </div>
+        </div>
+    </aside>
+
+    <main>
+        <header>
+            <div class="player-info player">
+                <h2 class="player-name">Player 1</h2>
+                <button class="button-82-pushable" role="button" disabled>
+                    <span class="button-82-shadow"></span>
+                    <span class="button-82-edge"></span>
+                    <span class="button-82-front text">
+                        READY
+                    </span>
+                </button>
+            </div>
+
+            <div class="battle-info">
+                <div class="duration">
+                    <span>00:00</span>
+                </div>
+                <span id="roomId">ROOM ID #</span>
+
+                <h2 id="turnPlayerName" class="">Bizarre Wombat</h2>
+            </div>
+
+            <div class="player-info enemy">
+                <h2 class="player-name">Player 1</h2>
+                <button class="button-82-pushable" role="button" disabled>
+                    <span class="button-82-shadow"></span>
+                    <span class="button-82-edge"></span>
+                    <span class="button-82-front text">
+                        READY
+                    </span>
+                </button>
+            </div>
+        </header>
+        <!-- Boards / Battlefields -->
+        <section>
+            <div id="player-board" class="board-area left">
+                <span class="bg"></span>
+                <div class="board" id="dropzone"></div>
+
+                <div class="number-row">
+                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+                </div>
+                <div class="letter-row">
+                    <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span><span>I</span><span>J</span>
+                </div>
+            </div>
+
+            <div class="board-area guide-pane">
+                <p>Place your all ships and click Ready.</p>
+                <div class="ships">
+                </div>
+                <ul>
+                    <li>Drag and drop to place ships.</li>
+                    <li>Click to rotate ship.</li>
+                </ul>
+            </div>
+
+            <div id="enemy-board" class="board-area right d-none">
+                <span class="bg"></span>
+                <div class="board">
+                </div>
+                <div class="number-row">
+                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+                </div>
+                <div class="letter-row">
+                    <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span><span>I</span><span>J</span>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+    <!-- Showing enemy/your fleet include health -->
+    <aside class="hidden">
+        <div class="fleet player2-fleet">
+            <div class="fleet-info">
+                <div class="fleet-name">Enemy Fleet</div>
+            </div>
+            <div class="ships">
+            </div>
+        </div>
+    </aside>
+
+
+    <button id="exitButton" class="button-92" role="button"><a href="/">EXIT</a></button>
+
+
+</body>
+
+</html>
