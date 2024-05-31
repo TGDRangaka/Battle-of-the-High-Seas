@@ -588,8 +588,8 @@ async function startGame() {
             if (cell.isHit) {
                 $("#player-board .board .cell .shot").eq(i).html(
                     cell.inside === 'empty'
-                        ? `<img src="../assets/imgs/missed-shot.png" alt="missed"/>`
-                        : `<img src="../assets/imgs/player-ship-fire.gif" alt="fire"/>`
+                        ? `<img src="${getAssetSrc('missed-shot.png')}" alt="missed"/>`
+                        : `<img src="${getAssetSrc('player-ship-fire.gif')}" alt="fire"/>`
                 )
             }
         })
@@ -605,8 +605,8 @@ async function startGame() {
             if (cell.isHit) {
                 $("#enemy-board .board .cell .shot").eq(i).html(
                     cell.inside === 'empty'
-                        ? `<img src="../assets/imgs/missed-shot.png" alt="missed"/>`
-                        : `<img src="../assets/imgs/fire.gif" alt="fire"/>`
+                        ? `<img src="${getAssetSrc('missed-shot.png')}" alt="missed"/>`
+                        : `<img src="${getAssetSrc('fire.png')}" alt="fire"/>`
                 )
             }
         })
