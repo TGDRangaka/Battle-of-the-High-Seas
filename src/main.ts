@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInAnonymously, User } from "firebase/auth";
-import { child, get, getDatabase, onChildAdded, onDisconnect, onValue, ref, set, update, DataSnapshot } from "firebase/database";
+import { child, get, getDatabase, onDisconnect, onValue, ref, set, update} from "firebase/database";
 import { Room, RoomStatus, Mode, Difficulty } from "./models/Room";
 import { Player, PlayerState } from "./models/Player";
 import { Board } from "./models/Board";

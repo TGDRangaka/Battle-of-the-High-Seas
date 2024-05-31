@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { User, getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
-import { DataSnapshot, child, get, getDatabase, onChildAdded, onValue, ref, set, update, remove } from "firebase/database";
+import { DataSnapshot, child, get, getDatabase, onChildAdded, onValue, ref, update, remove } from "firebase/database";
 import { Direction, Ship, ShipStatus } from "../models/Ship";
 import { Board, Cell } from "../models/Board";
 import { Player, PlayerState } from "../models/Player";
@@ -31,7 +31,6 @@ let roomId: string | null = urlParams.get("roomId");
 const auth = getAuth();
 let userId: string;
 let userRef: any;
-const usersRef = ref(database, 'users');
 let userSnapshot: DataSnapshot;
 
 onAuthStateChanged(auth, async (user: User | null) => {
@@ -166,6 +165,7 @@ onValue(ref(database, `rooms/${roomId}/players`), async snapshot => {
 let $selectedShip: any = null;
 function buildPlayground(): void {
     $(".guide-pane, #dropzone").on("dragstart", '.ship', function (e: JQuery.TriggeredEvent) {
+        e.preventDefault();
         if (room.status !== RoomStatus.WAITING) return;
         $selectedShip = $(this);
         const ship = player.ships.find(ship => ship.id === $selectedShip.attr("id"));
