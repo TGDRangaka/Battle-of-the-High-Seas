@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { User, getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
-import { DataSnapshot, child, get, getDatabase, onChildAdded, onValue, ref, set, update } from "firebase/database";
+import { DataSnapshot, child, get, getDatabase, onChildAdded, onValue, ref, set, update, remove } from "firebase/database";
 import { Direction, Ship, ShipStatus } from "../models/Ship";
 import { Board, Cell } from "../models/Board";
 import { Player, PlayerState } from "../models/Player";
@@ -114,15 +114,14 @@ onChildAdded(ref(database, `rooms/${roomId}/players`), snapshot => {
 let isStartedGame = false;
 
 onValue(ref(database, `rooms/${roomId}/players`), async snapshot => {
+    if (isStartedGame) return;
     const room = await get(roomRef);
     if (room.val().status !== RoomStatus.WAITING) {
         // Update UI
-        $(".guide-pane").hide();
-        $(".board-area + .right").show();
-        $("aside").removeClass("hidden");
-        $(".player-info button").hide();
-        $("#dropzone .ship[draggable='true']").attr('draggable', 'false');
-        $("#dropzone .ship").css('zIndex', '-1');
+        updateUI()
+
+        // Update database board
+        updateBoard();
         console.log("start >>>")
         !isStartedGame && startGame();
         return;
@@ -145,14 +144,8 @@ onValue(ref(database, `rooms/${roomId}/players`), async snapshot => {
         console.log("Both Players are ready");
         //TODO
         update(roomRef, { status: RoomStatus.PLAYING }).then(() => {
-            isStartedGame = true;
             // Update UI
-            $(".guide-pane").hide();
-            $(".board-area + .right").show();
-            $("aside").removeClass("hidden");
-            $(".player-info button").hide();
-            $("#dropzone .ship[draggable='true']").attr('draggable', 'false');
-            $("#dropzone .ship").css('zIndex', '-1');
+            updateUI()
 
             // Update player state as playing
             player.state = PlayerState.PLAYING;
@@ -422,7 +415,7 @@ function isShipCanRotate(clickedShip: Ship, ships: Array<Ship>): boolean {
 // Replace ships to dropzone
 function replaceShipsToDropzone(ships: Array<Ship>): void {
     for (let ship of ships) {
-        if (ship.index != -1 && ship.status != ShipStatus.INACTIVE) {
+        if (ship.status != ShipStatus.INACTIVE) {
             const index = ship.index;
             const direction = ship.direction;
 
@@ -452,6 +445,7 @@ function replaceShipsToDropzone(ships: Array<Ship>): void {
 
 // Update database boards
 function updateBoard(): void {
+    console.log("Player Board", player.board);
     player.ships.map(ship => {
         const index = ship.index;
         const direction = ship.direction;
@@ -466,6 +460,17 @@ function updateBoard(): void {
             }
         }
     });
+    console.log("Player Board", player.board);
+}
+
+function updateUI(): void {
+    $(".guide-pane").hide();
+    $(".board-area + .right").show();
+    $("aside").removeClass("hidden");
+    $(".player-info button").hide();
+    $("#dropzone .ship[draggable='true']").attr('draggable', 'false');
+    $("#dropzone .ship").css('zIndex', '-1');
+    $("#turnPlayerName").show();
 }
 
 
@@ -474,7 +479,10 @@ function updateBoard(): void {
 
 // Game start
 async function startGame() {
-    isStartedGame = true;
+    if (isStartedGame) return;
+
+    // add cells to shot element
+    $(".cell").append("<div class='shot'></div>")
 
     // Add game stat model
     get(child(ref(database), `rooms/${roomId}/gameStat`)).then(gameStat => {
@@ -483,9 +491,6 @@ async function startGame() {
             console.log("game stat added to room")
         }).catch(err => console.error("Error while adding game stat", err));
     })
-
-
-    console.log("game started");
 
     // refereces
     const turnRef = ref(database, `rooms/${roomId}/turn`);
@@ -502,34 +507,37 @@ async function startGame() {
     let turnSnapshot: DataSnapshot = await get(ref(database, `rooms/${roomId}/turn`));
 
     onValue(turnRef, snapshot => {
-        // snapshot.val();
-        $("#enemy-board .board").on('click', '.cell', function () {
-            if (snapshot.val() === player.id) {
-                const clickedIndex = $(this).index();
-                console.log(clickedIndex);
-                if (enemyBoard[clickedIndex].isHit) return;
-
-                update(gameStatRef, { selectedCell: clickedIndex })
-            }
-        })
+        const turnPlayerId = snapshot.val();
+        $("#turnPlayerName").text(turnPlayerId == player.id ? "YOUR TURN" : "ENEMY TURN");
+        $("#turnPlayerName").css("color", turnPlayerId == player.id ? "#9DFF21" : "#ff2121");
     });
+
+    $("#enemy-board .board").on('click', '.cell', async function () {
+        const currentTurn = await get(turnRef);
+        if (currentTurn.val() === player.id) {
+            const clickedIndex = $(this).index();
+            if (enemyBoard[clickedIndex].isHit) return;
+
+            await update(gameStatRef, { selectedCell: clickedIndex });
+        }
+    })
 
     // listen to selected cell index
     onValue(selectedCellRef, async snapshot => {
         const selectedCell = snapshot.val();
+        const currentTurn = await get(turnRef);
         if (selectedCell == -1) return;
         // I attacked
-        if (turnSnapshot.val() === player.id) {
+        if (currentTurn.val() === player.id) {
 
         } else {  // Enemy attacked me
             const shotCell = player.board.grid[selectedCell];
-            console.log('shot cell', shotCell);
             // update ship (health, status)
             player.board.grid[selectedCell].isHit = true;
+            console.log("attacked shot - ", player.board.grid[selectedCell]);
             if (shotCell.inside !== 'empty') {
                 let i = player.ships.findIndex(ship => ship.id === shotCell.inside);
                 if (!player.ships[i]) return;
-                console.log('attacked ship', player.ships[i]);
                 if (player.ships[i].health > 1) {
                     player.ships[i].health = player.ships[i].health - 1;
                     player.ships[i].status = ShipStatus.DAMAGED;
@@ -538,22 +546,34 @@ async function startGame() {
                     player.ships[i].status = ShipStatus.DESTROYED;
                 }
             }
-            // player.board.grid = myBoard;
-            await update(playerRef!, player);
-            console.log('shot cell  update', player);
+
+            // update player data
+            update(playerRef!, player).then(async () => {
+                // check winner
+                if (isHaveWinner(player.ships)) {
+                    await update(gameStatRef, { isHaveWinner: true, winner: enemy });
+                }
+
+                // change turn now
+                await update(roomRef, {
+                    turn: player.id
+                })
+
+            }).catch(err => console.log("error updating the player after attack", err));
         }
 
 
+
     })
-    // update my grid ui
-    onValue(playerBoardRef, snapshot => {
-        if (turnSnapshot.val() === player.id) return;
+    // update my grid ui if its enemy turn
+    onValue(playerBoardRef, async snapshot => {
+        const currentTurn = await get(turnRef);
+        // if (currentTurn.val() === player.id) return;
         myBoard = snapshot.val();
         console.log('updated my grid--');
         myBoard.map((cell, i) => {
             if (cell.isHit) {
-                console.log("hit one", i);
-                $("#player-board .board .cell").eq(i).html(
+                $("#player-board .board .cell .shot").eq(i).html(
                     cell.inside === 'empty'
                         ? `<img src="../assets/imgs/missed-shot.png" alt="missed"/>`
                         : `<img src="../assets/imgs/player-ship-fire.gif" alt="fire"/>`
@@ -562,15 +582,15 @@ async function startGame() {
         })
     })
 
-    // Update enemy grid ui
-    onValue(enemyBoardRef, snapshot => {
-        if (turnSnapshot.val() !== player.id) return;
+    // Update enemy grid ui if its my turn
+    onValue(enemyBoardRef, async snapshot => {
+        const currentTurn = await get(turnRef);
+        // if (currentTurn.val() !== player.id) return;
         enemyBoard = snapshot.val();
         console.log('updated enemy grid--');
         enemyBoard.map((cell, i) => {
             if (cell.isHit) {
-                console.log("hit one", i);
-                $("#enemy-board .board .cell").eq(i).html(
+                $("#enemy-board .board .cell .shot").eq(i).html(
                     cell.inside === 'empty'
                         ? `<img src="../assets/imgs/missed-shot.png" alt="missed"/>`
                         : `<img src="../assets/imgs/fire.gif" alt="fire"/>`
@@ -579,5 +599,27 @@ async function startGame() {
         })
     })
 
+    onValue(isHaveWinnerRef, async snapshot => {
+        if (snapshot.val()) {
+            const winnerSnapsot: DataSnapshot = await get(ref(database, `rooms/${roomId}/gameStat/winner`));
+            const winnerPlayer = winnerSnapsot.val();
+            alert("Winner is " + winnerPlayer.name);
 
+            $("#turnPlayerName").text(winnerPlayer == player.id ? "YOUR WIN" : "ENEMY WIN");
+            $("#turnPlayerName").css("color", winnerPlayer == player.id ? "#9DFF21" : "#ff2121");
+        }
+
+    })
+
+    isStartedGame = true;
+    console.log("game started");
 }
+
+function isHaveWinner(ships: Array<Ship>): boolean {
+    return ships.filter(ship => ship.status === ShipStatus.DESTROYED).length === ships.length;
+}
+
+$("#exitButton").click(async function () {
+    // remove room
+    await remove(roomRef);
+})
