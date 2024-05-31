@@ -25,7 +25,7 @@ const database = getDatabase();
 // Get Room Id from URL
 const urlParams = new URLSearchParams(window.location.search);
 let roomId: string | null = urlParams.get("roomId");
-console.log(roomId);
+// console.log(roomId);
 
 // Sign in
 const auth = getAuth();
@@ -42,11 +42,11 @@ onAuthStateChanged(auth, async (user: User | null) => {
         try {
             userSnapshot = await get(userRef);
 
-            if (!userSnapshot.exists()) {
-                // User is new, assign a name
-            } else {
-                // User is returning, fetch their name
-            }
+            // if (!userSnapshot.exists()) {
+            //     // User is new, assign a name
+            // } else {
+            //     // User is returning, fetch their name
+            // }
         } catch (error) {
             console.error('Error fetching user data:', error);
         }
@@ -81,7 +81,7 @@ get(roomRef).then(snapshot => {
         room = snapshot.val();
         const players = new Map<string, Player>(Object.entries(room.players || {}));
 
-        console.log("Room get successfuly")
+        // console.log("Room get successfuly")
         $("#roomId").text(`ROOM ID: #${room.roomId}`);
         const player1: Player | undefined = players.get(userId);
 
@@ -100,7 +100,7 @@ get(roomRef).then(snapshot => {
             buildPlayground();
         }
     } else {
-        console.log("no room to get...")
+        console.error("no room to get...")
     }
 })
 
@@ -108,6 +108,7 @@ onChildAdded(ref(database, `rooms/${roomId}/players`), snapshot => {
     if (snapshot.exists() && snapshot.val().id !== userId) {
         enemy = snapshot.val();
         $(".enemy .player-name").text(enemy.name);
+        alert("Player Joined!!!");
     }
 })
 
@@ -122,7 +123,7 @@ onValue(ref(database, `rooms/${roomId}/players`), async snapshot => {
 
         // Update database board
         updateBoard();
-        console.log("start >>>")
+        // console.log("start >>>")
         !isStartedGame && startGame();
         return;
     }
@@ -141,21 +142,21 @@ onValue(ref(database, `rooms/${roomId}/players`), async snapshot => {
 
     // players are ready
     if (isPlayersAreReady[0] && isPlayersAreReady[1]) {
-        console.log("Both Players are ready");
+        // console.log("Both Players are ready");
         //TODO
         update(roomRef, { status: RoomStatus.PLAYING }).then(() => {
             // Update UI
             updateUI()
 
+            // Update database board
+            updateBoard();
+
             // Update player state as playing
             player.state = PlayerState.PLAYING;
             update(playerRef!, player);
 
-            // Update database board
-            updateBoard();
-
             // Start game
-            console.log("start -->")
+            // console.log("start -->")
             startGame();
         }).catch(err => console.log("error updating room status to playing", err));
     }
@@ -269,7 +270,7 @@ $('.player button').on('click', function () {
         update(playerRef!, {
             state: PlayerState.READY
         }).then(() => {
-            console.log("Player is Ready updated");
+            // console.log("Player is Ready updated");
         }).catch(err => console.log("error while updating ships", err));
     }
 })
@@ -445,7 +446,7 @@ function replaceShipsToDropzone(ships: Array<Ship>): void {
 
 // Update database boards
 function updateBoard(): void {
-    console.log("Player Board", player.board);
+    // console.log("Player Board", player.board);
     player.ships.map(ship => {
         const index = ship.index;
         const direction = ship.direction;
@@ -460,7 +461,7 @@ function updateBoard(): void {
             }
         }
     });
-    console.log("Player Board", player.board);
+    // console.log("Player Board", player.board);
 }
 
 function updateUI(): void {
@@ -488,7 +489,7 @@ async function startGame() {
     get(child(ref(database), `rooms/${roomId}/gameStat`)).then(gameStat => {
         if (gameStat.exists()) return;
         update(roomRef, { gameStat: new GameStat(false, null, -1) }).then(() => {
-            console.log("game stat added to room")
+            // console.log("game stat added to room")
         }).catch(err => console.error("Error while adding game stat", err));
     })
 
@@ -504,7 +505,6 @@ async function startGame() {
     let enemyBoard: Array<Cell> = enemyBoardSnapshot.val();
     let myBoardSnapshot: DataSnapshot = await get(ref(database, `rooms/${roomId}/players/${player.id}/board/grid`));
     let myBoard: Array<Cell> = myBoardSnapshot.val();
-    let turnSnapshot: DataSnapshot = await get(ref(database, `rooms/${roomId}/turn`));
 
     onValue(turnRef, snapshot => {
         const turnPlayerId = snapshot.val();
@@ -534,7 +534,7 @@ async function startGame() {
             const shotCell = player.board.grid[selectedCell];
             // update ship (health, status)
             player.board.grid[selectedCell].isHit = true;
-            console.log("attacked shot - ", player.board.grid[selectedCell]);
+            // console.log("attacked shot - ", player.board.grid[selectedCell]);
             if (shotCell.inside !== 'empty') {
                 let i = player.ships.findIndex(ship => ship.id === shotCell.inside);
                 if (!player.ships[i]) return;
@@ -567,10 +567,10 @@ async function startGame() {
     })
     // update my grid ui if its enemy turn
     onValue(playerBoardRef, async snapshot => {
-        const currentTurn = await get(turnRef);
+        // const currentTurn = await get(turnRef);
         // if (currentTurn.val() === player.id) return;
         myBoard = snapshot.val();
-        console.log('updated my grid--');
+        // console.log('updated my grid--');
         myBoard.map((cell, i) => {
             if (cell.isHit) {
                 $("#player-board .board .cell .shot").eq(i).html(
@@ -584,10 +584,10 @@ async function startGame() {
 
     // Update enemy grid ui if its my turn
     onValue(enemyBoardRef, async snapshot => {
-        const currentTurn = await get(turnRef);
+        // const currentTurn = await get(turnRef);
         // if (currentTurn.val() !== player.id) return;
         enemyBoard = snapshot.val();
-        console.log('updated enemy grid--');
+        // console.log('updated enemy grid--');
         enemyBoard.map((cell, i) => {
             if (cell.isHit) {
                 $("#enemy-board .board .cell .shot").eq(i).html(
@@ -612,7 +612,7 @@ async function startGame() {
     })
 
     isStartedGame = true;
-    console.log("game started");
+    // console.log("game started");
 }
 
 function isHaveWinner(ships: Array<Ship>): boolean {

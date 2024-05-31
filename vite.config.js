@@ -5,10 +5,10 @@ import inject from "@rollup/plugin-inject";
 export default defineConfig(
   {
     plugins: [
-      inject({   // => that should be first under plugins array
+      inject({
         $: 'jquery',
         jQuery: 'jquery',
       })
     ],
-    base: '/Battle-of-the-High-Seas/', // replace 'repo-name' with your repository name
+    base: '/Battle-of-the-High-Seas/', // 'repo-name'
   });

@@ -50,12 +50,12 @@ onAuthStateChanged(auth, async (user: User | null) => {
                 // Returning user, fetch their name
                 playerName = userInfo;
                 await set(userRef, { name: playerName });
-                console.log('Returning user, name:', playerName);
+                // console.log('Returning user, name:', playerName);
             } else {
                 // New user, assign a name
                 playerName = generateRandomName();
                 await set(userRef, { name: playerName });
-                console.log('New user, assigned name:', playerName);
+                // console.log('New user, assigned name:', playerName);
                 saveUserInfo(userId, playerName);
             }
 
@@ -121,7 +121,7 @@ $("#createRoomBtn").on('click', async function () {
                 };
 
                 await set(ref(database, 'rooms/' + roomId), roomData).then(() => {
-                    console.log('Room Created', roomData);
+                    // console.log('Room Created', roomData);
                     isRoomCreated = true;
 
                     goToRoom(roomId.toString());
@@ -136,9 +136,9 @@ $("#createRoomBtn").on('click', async function () {
 
 $("#submitCode").click(async () => {
     let roomId: number = parseInt($("#roomIdInput").val() + "");
-    console.log(roomId);
+    // console.log(roomId);
     if (!roomId || roomId >= 10000 || roomId <= 999) {
-        console.log("Please enter a room ID");
+        alert("Please enter a room ID");
         return;
     }
 
@@ -172,11 +172,11 @@ $("#submitCode").click(async () => {
             // Save the updated room data back to Firebase
             update(child(ref(database), 'rooms/' + roomId), updatedRoomData)
                 .then(() => {
-                    console.log("Player Added & updated room")
+                    // console.log("Player Added & updated room")
                     goToRoom(roomId.toString());
                 }).catch(err => console.log("Error adding player to room", err));
         } else {
-            console.log('Room is already full.');
+            alert('Room is already full.');
         }
 
     } else {
