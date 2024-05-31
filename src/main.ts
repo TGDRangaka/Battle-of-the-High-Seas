@@ -212,7 +212,7 @@ function goToRoom(roomId: string) {
     // update player in the room
 
     // Direct to game room
-    window.location.href = `/Battle-of-the-High-Seas/src/pages/game-view.html?roomId=${roomId}`;
+    window.location.href = `#/Battle-of-the-High-Seas/src/pages/game-view.html?roomId=${roomId}`;
 }
 
 // generate a random player name
