@@ -5,6 +5,8 @@ import { Room, RoomStatus, Mode, Difficulty } from "./models/Room";
 import { Player, PlayerState } from "./models/Player";
 import { Board } from "./models/Board";
 import { Direction, Ship, ShipStatus } from "./models/Ship";
+import $ from "jquery";
+
 
 const firebaseConfig = {
     apiKey: "AIzaSyAL0AmcXBH1zr7EKL8pE3-Joge0Pxyljfg",
@@ -26,6 +28,25 @@ let userId: string;
 let userRef: any;
 let playerName: string;
 const usersRef = ref(database, 'users');
+
+
+const ships: Array<Ship> = [
+    // new Ship('ship-6-1', '6x1', 6, -1, ShipStatus.INACTIVE, 6, Direction.ROW),
+    new Ship('ship-4-2', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
+    new Ship('ship-4-1', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
+    new Ship('ship-3-2', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
+    new Ship('ship-3-1', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
+    new Ship('ship-2-1', '2x1', 2, -1, ShipStatus.INACTIVE, 2, Direction.ROW)
+];
+// document.addEventListener('DOMContentLoaded', () => {
+//     ships.map(ship => {
+//     const img = new Image();
+//     img.src = `./src/assets/imgs/${ship}.png`; // Adjust the path relative to the current file
+//     img.alt = 'Ship Image';
+//     document.body.appendChild(img);
+//     })
+// });
+
 
 
 // Listen for changes to the list of users
@@ -95,14 +116,6 @@ $("#createRoomBtn").on('click', async function () {
             if (!rooms.exists()) {
                 // Create room, players, boards
 
-                const ships: Array<Ship> = [
-                    // new Ship('ship-6-1', '6x1', 6, -1, ShipStatus.INACTIVE, 6, Direction.ROW),
-                    // new Ship('ship-4-2', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
-                    // new Ship('ship-4-1', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
-                    // new Ship('ship-3-2', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
-                    new Ship('ship-3-1', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
-                    new Ship('ship-2-1', '2x1', 2, -1, ShipStatus.INACTIVE, 2, Direction.ROW)
-                ];
                 const players: Map<string, Player> = new Map();
                 players.set(userId, new Player(userId, playerName, new Board(10), ships, PlayerState.NOT_READY))
                 const room: Room = new Room(
@@ -151,14 +164,7 @@ $("#submitCode").click(async () => {
         // Check the number of players in the room
         if (playersMap.size < 2) {
             // Add the new player to the room
-            const ships: Array<Ship> = [
-                // new Ship('ship-6-1', '6x1', 6, -1, ShipStatus.INACTIVE, 6, Direction.ROW),
-                // new Ship('ship-4-2', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
-                // new Ship('ship-4-1', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
-                // new Ship('ship-3-2', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
-                new Ship('ship-3-1', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
-                new Ship('ship-2-1', '2x1', 2, -1, ShipStatus.INACTIVE, 2, Direction.ROW)
-            ]
+
             const newPlayer = new Player(userId, playerName, new Board(10), ships, PlayerState.NOT_READY);
 
             playersMap.set(newPlayer.id, newPlayer);

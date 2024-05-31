@@ -6,6 +6,7 @@ import { Board, Cell } from "../models/Board";
 import { Player, PlayerState } from "../models/Player";
 import { Room, RoomStatus } from "../models/Room";
 import { GameStat } from "../models/GameStat";
+import $ from "jquery";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAL0AmcXBH1zr7EKL8pE3-Joge0Pxyljfg",
@@ -42,9 +43,9 @@ onAuthStateChanged(auth, async (user: User | null) => {
             userSnapshot = await get(userRef);
 
             if (!userSnapshot.exists()) {
-            //     // User is new, assign a name
+                //     // User is new, assign a name
             } else {
-            //     // User is returning, fetch their name
+                //     // User is returning, fetch their name
             }
         } catch (error) {
             console.error('Error fetching user data:', error);
@@ -164,8 +165,8 @@ onValue(ref(database, `rooms/${roomId}/players`), async snapshot => {
 // Create Board -- Create ships
 let $selectedShip: any = null;
 function buildPlayground(): void {
-    $(".guide-pane, #dropzone").on("dragstart", '.ship', function (e: JQuery.TriggeredEvent) {
-        e.preventDefault();
+    $(".guide-pane, #dropzone").on("dragstart", '.ship', function (_e: JQuery.TriggeredEvent) {
+        
         if (room.status !== RoomStatus.WAITING) return;
         $selectedShip = $(this);
         const ship = player.ships.find(ship => ship.id === $selectedShip.attr("id"));
@@ -275,22 +276,33 @@ $('.player button').on('click', function () {
     }
 })
 
+const getAssetSrc = (name: string): string => {
+    const path = `/src/assets/imgs/${name}`;
+    const modules = import.meta.glob("/src/assets/imgs/*", { eager: true });
+
+    // Find the module corresponding to the requested path
+    const mod = modules[path] as { default: string };
+    return mod ? mod.default : '';
+};
+
 // set guide pane ships
 function setShips(ships: Array<Ship>): void {
+
     for (let ship of ships) {
-        // break;
+        const shipImgPath = getAssetSrc(ship.id + '.png');
+        console.log(`Loading image from path: ${shipImgPath}`);
         if (ship.status === ShipStatus.INACTIVE) {
             $(".guide-pane .ships").append(`
-        <div id="${ship.id}" class="ship" draggable="true" data-size="${ship.size}" direaction="column">
-            <img src="../assets/imgs/${ship.id}.png" alt="">
-        </div>
-    `)
+            <div id="${ship.id}" class="ship" draggable="true" data-size="${ship.size}" direaction="column">
+                <img src="${shipImgPath}">
+            </div>
+        `)
         }
         $('.fleet .ships').append(`
-    <div id="${ship.id}" class="ship" data-size="${ship.size}" direaction="column">
-        <img src="../assets/imgs/${ship.id}.png" alt="">
-    </div>
-    `)
+            <div id="${ship.id}" class="ship" data-size="${ship.size}" direaction="column">
+                <img src="${shipImgPath}">
+            </div>
+        `)
     }
 }
 
@@ -419,18 +431,19 @@ function replaceShipsToDropzone(ships: Array<Ship>): void {
         if (ship.status != ShipStatus.INACTIVE) {
             const index = ship.index;
             const direction = ship.direction;
+            const imagePath = getAssetSrc(ship.id + '.png');
 
             let $cell = $('.cell').eq(index);
             if (direction == Direction.ROW) {
                 $cell.append(`
                 <div id="${ship.id}" class="ship" draggable="true" data-size="${ship.size}" direction="row">
-                    <img src="../assets/imgs/${ship.id}.png" alt="">
+                    <img src="${imagePath}" alt="">
                 </div>
                 `)
             } else {
                 $cell.append(`
                 <div id="${ship.id}" class="ship" draggable="true" data-size="${ship.size}" direction="column">
-                    <img src="../assets/imgs/${ship.id}.png" alt="">
+                    <img src="${imagePath}" alt="">
                 </div>
                 `)
             }
