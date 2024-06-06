@@ -606,7 +606,7 @@ async function startGame() {
                 $("#enemy-board .board .cell .shot").eq(i).html(
                     cell.inside === 'empty'
                         ? `<img src="${getAssetSrc('missed-shot.png')}" alt="missed"/>`
-                        : `<img src="${getAssetSrc('fire.png')}" alt="fire"/>`
+                        : `<img src="${getAssetSrc('fire.gif')}" alt="fire"/>`
                 )
             }
         })
