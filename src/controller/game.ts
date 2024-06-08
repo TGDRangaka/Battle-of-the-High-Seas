@@ -5,7 +5,7 @@ import { Direction, Ship, ShipStatus } from "../models/Ship";
 import { Board, Cell } from "../models/Board";
 import { Player, PlayerState } from "../models/Player";
 import { Room, RoomStatus } from "../models/Room";
-import { GameStat } from "../models/GameStat";
+import { GameStat, ShotStatus } from "../models/GameStat";
 import $ from "jquery";
 
 const firebaseConfig = {
@@ -108,7 +108,8 @@ onChildAdded(ref(database, `rooms/${roomId}/players`), snapshot => {
     if (snapshot.exists() && snapshot.val().id !== userId) {
         enemy = snapshot.val();
         $(".enemy .player-name").text(enemy.name);
-        alert("Player Joined!!!");
+        // alert("Player Joined!!!");
+        showMessage("Player Joined")
     }
 })
 
@@ -501,7 +502,7 @@ async function startGame() {
     // Add game stat model
     get(child(ref(database), `rooms/${roomId}/gameStat`)).then(gameStat => {
         if (gameStat.exists()) return;
-        update(roomRef, { gameStat: new GameStat(false, null, -1) }).then(() => {
+        update(roomRef, { gameStat: new GameStat(false, null, -1, ShotStatus.NOT_FIRED) }).then(() => {
             // console.log("game stat added to room")
         }).catch(err => console.error("Error while adding game stat", err));
     })
@@ -511,6 +512,7 @@ async function startGame() {
     const gameStatRef = ref(database, `rooms/${roomId}/gameStat`);
     const isHaveWinnerRef = ref(database, `rooms/${roomId}/gameStat/isHaveWinner`);
     const selectedCellRef = ref(database, `rooms/${roomId}/gameStat/selectedCell`);
+    const firedShotStatusRef = ref(database, `rooms/${roomId}/gameStat/firedShotStatus`);
     const enemyBoardRef = ref(database, `rooms/${roomId}/players/${enemy.id}/board/grid`);
     const playerBoardRef = ref(database, `rooms/${roomId}/players/${player.id}/board/grid`);
 
@@ -545,6 +547,7 @@ async function startGame() {
 
         } else {  // Enemy attacked me
             const shotCell = player.board.grid[selectedCell];
+            let shotStatus = ShotStatus.MISS;
             // update ship (health, status)
             player.board.grid[selectedCell].isHit = true;
             // console.log("attacked shot - ", player.board.grid[selectedCell]);
@@ -554,12 +557,16 @@ async function startGame() {
                 if (player.ships[i].health > 1) {
                     player.ships[i].health = player.ships[i].health - 1;
                     player.ships[i].status = ShipStatus.DAMAGED;
+                    shotStatus = ShotStatus.HIT;
                 } else {
                     player.ships[i].health = 0;
                     player.ships[i].status = ShipStatus.DESTROYED;
+                    shotStatus = ShotStatus.DESTROYED;
                 }
             }
 
+            // Update fired shot status
+            await update(gameStatRef, { firedShotStatus: shotStatus });
             // update player data
             update(playerRef!, player).then(async () => {
                 // check winner
@@ -575,8 +582,13 @@ async function startGame() {
             }).catch(err => console.log("error updating the player after attack", err));
         }
 
-
-
+        const firedShotStatus = await get(firedShotStatusRef);
+        console.log(firedShotStatus.val());
+        switch(firedShotStatus.val()) {
+            case ShotStatus.MISS : showMessage("Shot Missed"); break;
+            case ShotStatus.HIT : showMessage("Great Shot"); break;
+            case ShotStatus.DESTROYED : showMessage("A Ship Destroyed"); break;
+        }
     })
     // update my grid ui if its enemy turn
     onValue(playerBoardRef, async snapshot => {
@@ -589,7 +601,7 @@ async function startGame() {
                 $("#player-board .board .cell .shot").eq(i).html(
                     cell.inside === 'empty'
                         ? `<img src="${getAssetSrc('missed-shot.png')}" alt="missed"/>`
-                        : `<img src="${getAssetSrc('player-ship-fire.gif')}" alt="fire"/>`
+                        : `<img src="${getAssetSrc('hit-shot.jpg')}" alt="fire"/>`
                 )
             }
         })
@@ -606,7 +618,7 @@ async function startGame() {
                 $("#enemy-board .board .cell .shot").eq(i).html(
                     cell.inside === 'empty'
                         ? `<img src="${getAssetSrc('missed-shot.png')}" alt="missed"/>`
-                        : `<img src="${getAssetSrc('fire.gif')}" alt="fire"/>`
+                        : `<img src="${getAssetSrc('hit-shot.jpg')}" alt="fire"/>`
                 )
             }
         })
@@ -616,7 +628,7 @@ async function startGame() {
         if (snapshot.val()) {
             const winnerSnapsot: DataSnapshot = await get(ref(database, `rooms/${roomId}/gameStat/winner`));
             const winnerPlayer = winnerSnapsot.val();
-            alert("Winner is " + winnerPlayer.name);
+            showMessage("Winner is " + winnerPlayer.name);
 
             $("#turnPlayerName").text(winnerPlayer == player.id ? "YOUR WIN" : "ENEMY WIN");
             $("#turnPlayerName").css("color", winnerPlayer == player.id ? "#9DFF21" : "#ff2121");
@@ -636,3 +648,15 @@ $("#exitButton").click(async function () {
     // remove room
     await remove(roomRef);
 })
+
+function showMessage(message: string): void{
+    $("#messages").append(`
+        <div class="message">
+            <div class="img"></div>
+            <div class="body">
+                <p>${message}</p>
+            </div>
+        </div>
+    `)
+    setTimeout(()=> $("#messages").empty(), 3000);
+}

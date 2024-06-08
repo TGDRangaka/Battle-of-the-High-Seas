@@ -34,6 +34,8 @@ body {
     font-weight: 400;
     font-style: normal;
 
+    overflow: hidden;
+
     /* background-size: cover;
     background-position: center;
     background-image: url("../imgs/wood-bg.jpg"); */
@@ -509,4 +511,60 @@ ul {
     color: #ff2121;
     font-size: 40px;
     display: none;
+}
+
+/*  */
+
+#messages {
+    position: absolute;
+    width: 600px;
+    height: 200px;
+    right: 0;
+    top: 20%;
+}
+
+.message {
+    width: 100%;
+    height: 100%;
+    border-radius: 100px 0 0 100px;
+    border: 3px solid black;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background-image: url("../imgs/message-bg.jpg");
+    background-size: cover;
+    background-position: left;
+    position: absolute;
+    /* right: -100%; */
+    animation: message-received .3s ease-out reverse;
+}
+
+.message.active {
+    right: 0;
+}
+
+@keyframes message-received {
+    from{
+        transform: translate(0);
+    }
+    to{
+        transform: translate(600px);
+    }
+}
+
+.message .img {
+    height: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background-image: url("../imgs/captain.png");
+    background-size: cover;
+    background-position: center;
+}
+
+.message p {
+    font-size: 30px;
+    /* border: 1px solid red; */
+    width: 250px;
+    height: 150px;
 }
