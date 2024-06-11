@@ -314,6 +314,7 @@ section {
     /* border: 1px solid greenyellow; */
     width: 45%;
     aspect-ratio: 1;
+    /* z-index: 100; */
 }
 
 .board-area .bg {
@@ -451,6 +452,16 @@ ul {
     aspect-ratio:1;
     mix-blend-mode: screen;
     position: absolute;
+    /* animation: scale-image 2s ease-in; */
+}
+
+@keyframes scale-image {
+    from{
+        transform: scale(4);
+    }
+    to{
+        transform: scale(1);
+    }
 }
 
 .shot{
@@ -517,17 +528,19 @@ ul {
 
 #messages {
     position: absolute;
-    width: 600px;
+    /* width: 800px; */
     height: 200px;
     right: 0;
     top: 20%;
 }
 
 .message {
-    width: 100%;
+    position: absolute;
+    width: 800px;
     height: 100%;
     border-radius: 100px 0 0 100px;
-    border: 3px solid black;
+    border: 3px solid #9DFF21;
+    border-right: 0;
     padding: 5px;
     display: flex;
     align-items: center;
@@ -536,7 +549,7 @@ ul {
     background-size: cover;
     background-position: left;
     position: absolute;
-    /* right: -100%; */
+    right: -100%;
     animation: message-received .3s ease-out reverse;
 }
 
@@ -565,6 +578,6 @@ ul {
 .message p {
     font-size: 30px;
     /* border: 1px solid red; */
-    width: 250px;
+    /* width: 250px; */
     height: 150px;
 }

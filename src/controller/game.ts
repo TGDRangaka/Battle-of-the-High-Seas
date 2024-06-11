@@ -7,6 +7,7 @@ import { Player, PlayerState } from "../models/Player";
 import { Room, RoomStatus } from "../models/Room";
 import { GameStat, ShotStatus } from "../models/GameStat";
 import $ from "jquery";
+import { MessageType, getMessage } from "../utils/messages";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAL0AmcXBH1zr7EKL8pE3-Joge0Pxyljfg",
@@ -167,7 +168,7 @@ onValue(ref(database, `rooms/${roomId}/players`), async snapshot => {
 let $selectedShip: any = null;
 function buildPlayground(): void {
     $(".guide-pane, #dropzone").on("dragstart", '.ship', function (_e: JQuery.TriggeredEvent) {
-        
+
         if (room.status !== RoomStatus.WAITING) return;
         $selectedShip = $(this);
         const ship = player.ships.find(ship => ship.id === $selectedShip.attr("id"));
@@ -514,6 +515,7 @@ async function startGame() {
     const selectedCellRef = ref(database, `rooms/${roomId}/gameStat/selectedCell`);
     const firedShotStatusRef = ref(database, `rooms/${roomId}/gameStat/firedShotStatus`);
     const enemyBoardRef = ref(database, `rooms/${roomId}/players/${enemy.id}/board/grid`);
+    const enemyRef = ref(database, `rooms/${roomId}/players/${enemy.id}`);
     const playerBoardRef = ref(database, `rooms/${roomId}/players/${player.id}/board/grid`);
 
     let enemyBoardSnapshot: DataSnapshot = await get(ref(database, `rooms/${roomId}/players/${enemy.id}/board/grid`));
@@ -539,11 +541,24 @@ async function startGame() {
 
     // listen to selected cell index
     onValue(selectedCellRef, async snapshot => {
+        const enemySnapshot = await get(enemyRef);
         const selectedCell = snapshot.val();
         const currentTurn = await get(turnRef);
         if (selectedCell == -1) return;
         // I attacked
         if (currentTurn.val() === player.id) {
+            enemy = enemySnapshot.val();
+            const shotCell = enemy.board.grid[selectedCell];
+            if(shotCell.inside !== 'empty'){
+                let i = enemy.ships.findIndex(ship => ship.id === shotCell.inside);
+                if(enemy.ships[i].health > 1){
+                    showMessage(getMessage(MessageType.PLAYER_HIT));
+                }else{
+                    showMessage(getMessage(MessageType.PLAYER_SINK));
+                }
+                return;
+            }
+            showMessage(getMessage(MessageType.PLAYER_MISS));
 
         } else {  // Enemy attacked me
             const shotCell = player.board.grid[selectedCell];
@@ -558,11 +573,15 @@ async function startGame() {
                     player.ships[i].health = player.ships[i].health - 1;
                     player.ships[i].status = ShipStatus.DAMAGED;
                     shotStatus = ShotStatus.HIT;
+                    showMessage(getMessage(MessageType.ENEMY_HIT));
                 } else {
                     player.ships[i].health = 0;
                     player.ships[i].status = ShipStatus.DESTROYED;
                     shotStatus = ShotStatus.DESTROYED;
+                    showMessage(getMessage(MessageType.ENEMY_SINK));
                 }
+            }else{
+                showMessage(getMessage(MessageType.ENEMY_MISS));
             }
 
             // Update fired shot status
@@ -582,20 +601,17 @@ async function startGame() {
             }).catch(err => console.log("error updating the player after attack", err));
         }
 
-        const firedShotStatus = await get(firedShotStatusRef);
-        console.log(firedShotStatus.val());
-        switch(firedShotStatus.val()) {
-            case ShotStatus.MISS : showMessage("Shot Missed"); break;
-            case ShotStatus.HIT : showMessage("Great Shot"); break;
-            case ShotStatus.DESTROYED : showMessage("A Ship Destroyed"); break;
-        }
+        // const firedShotStatus = await get(firedShotStatusRef);
+        // console.log(firedShotStatus.val());
+        // switch (firedShotStatus.val()) {
+        //     case ShotStatus.MISS: showMessage("Shot Missed"); break;
+        //     case ShotStatus.HIT: showMessage("Great Shot"); break;
+        //     case ShotStatus.DESTROYED: showMessage("A Ship Destroyed"); break;
+        // }
     })
     // update my grid ui if its enemy turn
     onValue(playerBoardRef, async snapshot => {
-        // const currentTurn = await get(turnRef);
-        // if (currentTurn.val() === player.id) return;
         myBoard = snapshot.val();
-        // console.log('updated my grid--');
         myBoard.map((cell, i) => {
             if (cell.isHit) {
                 $("#player-board .board .cell .shot").eq(i).html(
@@ -609,10 +625,7 @@ async function startGame() {
 
     // Update enemy grid ui if its my turn
     onValue(enemyBoardRef, async snapshot => {
-        // const currentTurn = await get(turnRef);
-        // if (currentTurn.val() !== player.id) return;
         enemyBoard = snapshot.val();
-        // console.log('updated enemy grid--');
         enemyBoard.map((cell, i) => {
             if (cell.isHit) {
                 $("#enemy-board .board .cell .shot").eq(i).html(
@@ -649,7 +662,7 @@ $("#exitButton").click(async function () {
     await remove(roomRef);
 })
 
-function showMessage(message: string): void{
+function showMessage(message: string): void {
     $("#messages").append(`
         <div class="message">
             <div class="img"></div>
@@ -658,5 +671,5 @@ function showMessage(message: string): void{
             </div>
         </div>
     `)
-    setTimeout(()=> $("#messages").empty(), 3000);
+    setTimeout(() => $("#messages").empty(), 3000);
 }
