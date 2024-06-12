@@ -390,6 +390,9 @@ section {
 .cell {
     border: 1px solid #dddddd48;
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .highlight {

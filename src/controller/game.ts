@@ -66,6 +66,7 @@ let playerRef;
 let player: Player;
 let enemy: Player;
 let room: Room;
+let boardSize: number;
 
 const $dropzone = $("#dropzone");
 let $cells: JQuery<HTMLElement>;
@@ -90,6 +91,7 @@ get(roomRef).then(snapshot => {
             }
         }
 
+        boardSize = player1!.board.size;
         createBoard(player1!.board);
         $cells = $('.cells') as JQuery<HTMLElement>;
         if ($cells) {
@@ -312,13 +314,13 @@ function createBoard(board: Board): void {
 }
 
 function isShipCanPlace(index: number, ship: Ship): boolean {
-    let startX: number = index % 10;
-    const startY: number = Math.floor(index / 10);
+    let startX: number = index % boardSize;
+    const startY: number = Math.floor(index / boardSize);
     let isCanPlace = true;
 
     // if ship direction row
     if (ship.direction === Direction.ROW) {
-        if (startX + ship.length > 10) return false;
+        if (startX + ship.length > boardSize) return false;
         l1: for (let i = 0; i < ship.length; i++) {
             let currentIndex = index + i;
             for (let otherShip of player.ships) {
@@ -330,7 +332,7 @@ function isShipCanPlace(index: number, ship: Ship): boolean {
                         }
                     } else {
                         for (let j = 0; j < otherShip.length; j++) {
-                            if (currentIndex === (otherShip.index + j * 10)) {
+                            if (currentIndex === (otherShip.index + j * boardSize)) {
                                 isCanPlace = false;
                                 break l1;
                             }
@@ -341,9 +343,9 @@ function isShipCanPlace(index: number, ship: Ship): boolean {
         }
         if (!isCanPlace) return false;
     } else {
-        if (startY + ship.length > 10) return false;
+        if (startY + ship.length > boardSize) return false;
         l1: for (let i = 0; i < ship.length; i++) {
-            let currentIndex = index + i * 10;
+            let currentIndex = index + i * boardSize;
             for (let otherShip of player.ships) {
                 if (otherShip.status !== ShipStatus.INACTIVE && otherShip.id !== ship.id) {
                     if (otherShip.direction === Direction.COLUMN) {
@@ -373,10 +375,10 @@ function isShipCanRotate(clickedShip: Ship, ships: Array<Ship>): boolean {
     // Check if can rotate
     // if ship current direction is row
     if (clickedShip.direction === Direction.ROW) { // check column direction
-        if ((Math.floor(index / 10) + clickedShip.length) > 10) return false;
+        if ((Math.floor(index / boardSize) + clickedShip.length) > boardSize) return false;
         for (let i = 1; i < clickedShip.length; i++) {
-            let nxtPlace = index + i * 10;
-            if (nxtPlace >= 100) return false;
+            let nxtPlace = index + i * boardSize;
+            if (nxtPlace >= (boardSize * boardSize)) return false;
             ships.forEach(ship => {
                 if (ship.status !== ShipStatus.INACTIVE && ship.id !== clickedShip.id) {
                     if (ship.direction === Direction.COLUMN) {
@@ -396,7 +398,7 @@ function isShipCanRotate(clickedShip: Ship, ships: Array<Ship>): boolean {
         }
         // check row direction 
     } else {
-        if (index % 10 + clickedShip.length > 10) return false;
+        if (index % boardSize + clickedShip.length > boardSize) return false;
         for (let i = 1; i < clickedShip.length; i++) {
             let nxtPlace = index + i;
             ships.forEach(ship => {
@@ -408,7 +410,7 @@ function isShipCanRotate(clickedShip: Ship, ships: Array<Ship>): boolean {
                         }
                     } else {
                         for (let j = 0; j < ship.length; j++) {
-                            if (nxtPlace === (ship.index + j * 10)) {
+                            if (nxtPlace === (ship.index + j * boardSize)) {
                                 isCanRotate = false;
                                 return;
                             }
@@ -467,7 +469,7 @@ function updateBoard(): void {
             }
         } else {
             for (let i = 0; i < ship.length; i++) {
-                player.board.grid[index + i * 10].inside = ship.id;
+                player.board.grid[index + i * boardSize].inside = ship.id;
             }
         }
     });
@@ -557,7 +559,7 @@ async function startGame() {
                     const shipIndex = enemy.ships[i].index;
                     let indexes: number[] = [];
                     for (let j = 0; j < enemy.ships[i].length; j++) {
-                        indexes.push(shipIndex + (enemy.ships[i].direction == Direction.ROW ? j : j * player.board.size));
+                        indexes.push(shipIndex + (enemy.ships[i].direction == Direction.ROW ? j : j * boardSize));
                     }
                     showExplostion(indexes, '#enemy-board');
                 }
@@ -589,7 +591,7 @@ async function startGame() {
                     const shipIndex = player.ships[i].index;
                     let indexes: number[] = [];
                     for (let j = 0; j < player.ships[i].length; j++) {
-                        indexes.push(shipIndex + (player.ships[i].direction == Direction.ROW ? j : j * player.board.size));
+                        indexes.push(shipIndex + (player.ships[i].direction == Direction.ROW ? j : j * boardSize));
                     }
                     showExplostion(indexes, '#player-board');
                 }
