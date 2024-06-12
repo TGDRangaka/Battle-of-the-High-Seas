@@ -21,7 +21,7 @@
 }
 
 body {
-    background-color: var(--bg-color);
+    /* background-color: var(--bg-color); */
     margin: 0;
     display: flex;
     /* place-items: center; */
@@ -36,9 +36,17 @@ body {
 
     overflow: hidden;
 
-    /* background-size: cover;
+}
+
+.bg{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
     background-position: center;
-    background-image: url("../imgs/wood-bg.jpg"); */
+    background-image: url("../imgs/game-bg.jpg");
+    z-index: -1000;
+    filter: brightness(.1);
 }
 
 /* /////////////////////////////////////////////////////////// */
@@ -144,31 +152,27 @@ header {
     grid-template-columns: repeat(3, 1fr);
     background-color: #323232;
     border-top-color: var(--bg-color);
+    position: relative;
 }
 
 header > div {
     width: 100%;
     height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .battle-info {
     display: flex;
     flex-direction: column;
-    /* justify-content: center; */
     align-items: center;
+    justify-content: space-around;
     gap: 10px;
+    height: 100%;
+    position: relative;
 }
 
-.duration{
-    background-color: var(--bg-color);
-    border: 1px solid white;
-    border-top-color: var(--bg-color);
-    border-radius: 0 0 30px 30px;
-    width: 100%;
-    height: 100px;
-    text-align: center;
-    font-size: 48px;
-}
 
 #roomId{
     font-size: 24px;
@@ -187,111 +191,119 @@ header > div {
     font-size: 24px;
 }
 
+.player .player-name{
+    color: #9DFF21;
+}
+
+.enemy .player-name{
+    color: #ff2121;
+}
+
 
 /* CSS */
-.button-82-pushable {
-    width: 300px;
-    position: relative;
-    border: none;
-    background: transparent;
-    padding: 0;
-    cursor: pointer;
-    outline-offset: 4px;
-    transition: filter 250ms;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
-}
+.button-77 {
+  align-items: center;
+  appearance: none;
+  background-clip: padding-box;
+  background-color: initial;
+  background-image: none;
+  border-style: none;
+  box-sizing: border-box;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-block;
+  flex-direction: row;
+  flex-shrink: 0;
+  font-family: Eina01,sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  justify-content: center;
+  line-height: 24px;
+  margin: 0;
+  min-height: 84px;
+  outline: none;
+  overflow: visible;
+  padding: 19px 36px;
+  pointer-events: auto;
+  position: relative;
+  text-align: center;
+  text-decoration: none;
+  text-transform: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  vertical-align: middle;
+  width: 60%;
+  word-break: keep-all;
+  z-index: 0;
 
-.button-82-shadow {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: 12px;
-    background: hsl(0deg 0% 0% / 0.25);
-    will-change: transform;
-    transform: translateY(2px);
-    transition:
-        transform 600ms cubic-bezier(.3, .7, .4, 1);
-}
-
-.button-82-edge {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: 12px;
-    background: linear-gradient(to left,
-            hsl(88, 100%, 16%) 0%,
-            hsl(83, 100%, 32%) 8%,
-            hsl(83, 100%, 32%) 92%,
-            hsl(88, 100%, 16%) 100%);
-}
-
-.button-82-front {
-    display: block;
-    position: relative;
-    padding: 12px 27px;
-    border-radius: 12px;
-    color: #111111;
-    font-size: 38px;
-    font-weight: 700;
-    font-family: "Quantico", sans-serif;
-    background: #9DFF21;
-    will-change: transform;
-    transform: translateY(-4px);
-    transition:
-        transform 600ms cubic-bezier(.3, .7, .4, 1);
-}
-
-.button-82-pushable:disabled .button-82-front{
-    filter: brightness(.7);
+  
+  /* font-family: "Quantico", sans-serif;
+  font-style: normal; */
 }
 
 @media (min-width: 768px) {
-    .button-82-front {
-        /* font-size: 1.25rem; */
-        padding: 12px 42px;
-    }
+  .button-77 {
+    padding: 19px 32px;
+  }
 }
 
-.button-82-pushable:hover {
-    filter: brightness(110%);
-    -webkit-filter: brightness(110%);
+.button-77:before,
+.button-77:after {
+  border-radius: 15px;
 }
 
-.button-82-pushable:hover .button-82-front {
-    transform: translateY(-6px);
-    transition:
-        transform 250ms cubic-bezier(.3, .7, .4, 1.5);
+.button-77:before {
+  background-color:  rgba(153, 205, 50, 0.301);
+  content: "";
+  display: block;
+  height: 100%;
+  left: 0;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  z-index: -2;
 }
 
-.button-82-pushable:active .button-82-front {
-    transform: translateY(-2px);
-    transition: transform 34ms;
+.button-77:after {
+  background-color: initial;
+  background-image: linear-gradient(to right, #11998e, #38ef7d);
+  bottom: 4px;
+  content: "";
+  display: block;
+  left: 4px;
+  overflow: hidden;
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  transition: all 100ms ease-out;
+  z-index: -1;
 }
 
-.button-82-pushable:hover .button-82-shadow {
-    transform: translateY(4px);
-    transition:
-        transform 250ms cubic-bezier(.3, .7, .4, 1.5);
+.button-77:hover:not(:disabled):after {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  transition-timing-function: ease-in;
 }
 
-.button-82-pushable:active .button-82-shadow {
-    transform: translateY(1px);
-    transition: transform 34ms;
+.button-77:active:not(:disabled) {
+  color: #ccc;
 }
 
-.button-82-pushable:focus:not(:focus-visible) {
-    outline: none;
+.button-77:active:not(:disabled):after {
+  background-image: linear-gradient(0deg, rgba(0, 0, 0, .2), rgba(0, 0, 0, .2)), linear-gradient(92.83deg, #ff7426 0, #f93a13 100%);
+  bottom: 4px;
+  left: 4px;
+  right: 4px;
+  top: 4px;
 }
 
-.enemy * {
-    animation: none !important;
-    transition: none !important;
+.button-77:disabled {
+  cursor: default;
+  opacity: .24;
 }
 
 /* /////////////////////////////////////////////////////////////////////////////////// */
@@ -569,7 +581,7 @@ ul {
     /* width: 800px; */
     height: 200px;
     right: 0;
-    top: 20%;
+    top: 5%;
 }
 
 .message {
@@ -589,6 +601,7 @@ ul {
     position: absolute;
     right: -100%;
     animation: message-received .3s ease-out reverse;
+    z-index: 10;
 }
 
 .message.active {

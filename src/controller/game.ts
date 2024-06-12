@@ -68,11 +68,6 @@ let enemy: Player;
 let room: Room;
 
 const $dropzone = $("#dropzone");
-
-// for (let i = 0; i < 100; i++) {
-//     $dropzone.append(`<div data-index="${i}" class="cell"></div>`);
-// }
-// const $cells = $('.cell');
 let $cells: JQuery<HTMLElement>;
 // Get Room Data
 const roomRef = ref(database, 'rooms/' + roomId);
@@ -91,7 +86,7 @@ get(roomRef).then(snapshot => {
             playerRef = ref(database, `rooms/${roomId}/players/${userId}`);
             $(".player .player-name").text(player.name);
             if (player.state === PlayerState.NOT_READY) {
-                $(".player button").prop("disabled", true);
+                $("#readyBtn").prop("disabled", true);
             }
         }
 
@@ -138,7 +133,7 @@ onValue(ref(database, `rooms/${roomId}/players`), async snapshot => {
         }
         // enemy action
         else {
-            player.state !== PlayerState.NOT_READY && $(".enemy button").prop("disabled", false) && (isPlayersAreReady[1] = true);
+            player.state !== PlayerState.NOT_READY && (isPlayersAreReady[1] = true);
         }
     })
 
@@ -219,9 +214,9 @@ function buildPlayground(): void {
 
                 // update player ships database
                 if (player.ships.filter(ship => ship.status === ShipStatus.INACTIVE).length == 0) {
-                    $(".player button").prop("disabled", false);
+                    $("#readyBtn").prop("disabled", false);
                 } else {
-                    $(".player button").prop("disabled", true);
+                    $("#readyBtn").prop("disabled", true);
                 }
                 update(playerRef!, player).catch(err => console.log("error while updating ships", err));
             }
@@ -268,7 +263,7 @@ function buildPlayground(): void {
 }
 
 // player button action
-$('.player button').on('click', function () {
+$('#readyBtn').on('click', function () {
     if (player.state === PlayerState.NOT_READY) {
         update(playerRef!, {
             state: PlayerState.READY
@@ -483,7 +478,7 @@ function updateUI(): void {
     $(".guide-pane").hide();
     $(".board-area + .right").show();
     $("aside").removeClass("hidden");
-    $(".player-info button").hide();
+    $("#readyBtn").hide();
     $("#dropzone .ship[draggable='true']").attr('draggable', 'false');
     $("#dropzone .ship").css('zIndex', '-1');
     $("#turnPlayerName").show();
@@ -742,7 +737,6 @@ function showEnemyShips(ships: Array<Ship>) {
 }
 
 function showExplostion(indexes: number[], boardParent: string): void {
-    console.log(indexes);
     for (let index of indexes) {
         $(`${boardParent} .board .cell`).eq(index).append(`
             <div class="boom"><img src="${getAssetSrc('explotion.gif')}" alt="boom"/>
