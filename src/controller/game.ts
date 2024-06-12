@@ -264,7 +264,7 @@ function buildPlayground(): void {
         }
     })
     setShips(player.ships);
-    replaceShipsToDropzone(player.ships);
+    replaceShipsToDropzone(player.ships, "#player-board");
 }
 
 // player button action
@@ -292,7 +292,6 @@ function setShips(ships: Array<Ship>): void {
 
     for (let ship of ships) {
         const shipImgPath = getAssetSrc(ship.id + '.png');
-        console.log(`Loading image from path: ${shipImgPath}`);
         if (ship.status === ShipStatus.INACTIVE) {
             $(".guide-pane .ships").append(`
             <div id="${ship.id}" class="ship" draggable="true" data-size="${ship.size}" direaction="column">
@@ -428,14 +427,14 @@ function isShipCanRotate(clickedShip: Ship, ships: Array<Ship>): boolean {
 }
 
 // Replace ships to dropzone
-function replaceShipsToDropzone(ships: Array<Ship>): void {
+function replaceShipsToDropzone(ships: Array<Ship>, parentElement: string): void {
     for (let ship of ships) {
         if (ship.status != ShipStatus.INACTIVE) {
             const index = ship.index;
             const direction = ship.direction;
             const imagePath = getAssetSrc(ship.id + '.png');
 
-            let $cell = $('.cell').eq(index);
+            let $cell = $(`${parentElement} .cell`).eq(index);
             if (direction == Direction.ROW) {
                 $cell.append(`
                 <div id="${ship.id}" class="ship" draggable="true" data-size="${ship.size}" direction="row">
@@ -513,7 +512,6 @@ async function startGame() {
     const gameStatRef = ref(database, `rooms/${roomId}/gameStat`);
     const isHaveWinnerRef = ref(database, `rooms/${roomId}/gameStat/isHaveWinner`);
     const selectedCellRef = ref(database, `rooms/${roomId}/gameStat/selectedCell`);
-    const firedShotStatusRef = ref(database, `rooms/${roomId}/gameStat/firedShotStatus`);
     const enemyBoardRef = ref(database, `rooms/${roomId}/players/${enemy.id}/board/grid`);
     const enemyRef = ref(database, `rooms/${roomId}/players/${enemy.id}`);
     const playerBoardRef = ref(database, `rooms/${roomId}/players/${player.id}/board/grid`);
@@ -523,7 +521,9 @@ async function startGame() {
     let myBoardSnapshot: DataSnapshot = await get(ref(database, `rooms/${roomId}/players/${player.id}/board/grid`));
     let myBoard: Array<Cell> = myBoardSnapshot.val();
 
-    onValue(turnRef, snapshot => {
+    onValue(turnRef, async (snapshot) => {
+        const isHaveWinnerSs = await get(isHaveWinnerRef);
+        if (isHaveWinnerSs.val()) return;
         const turnPlayerId = snapshot.val();
         $("#turnPlayerName").text(turnPlayerId == player.id ? "YOUR TURN" : "ENEMY TURN");
         $("#turnPlayerName").css("color", turnPlayerId == player.id ? "#9DFF21" : "#ff2121");
@@ -549,11 +549,11 @@ async function startGame() {
         if (currentTurn.val() === player.id) {
             enemy = enemySnapshot.val();
             const shotCell = enemy.board.grid[selectedCell];
-            if(shotCell.inside !== 'empty'){
+            if (shotCell.inside !== 'empty') {
                 let i = enemy.ships.findIndex(ship => ship.id === shotCell.inside);
-                if(enemy.ships[i].health > 1){
+                if (enemy.ships[i].health > 1) {
                     showMessage(getMessage(MessageType.PLAYER_HIT));
-                }else{
+                } else {
                     showMessage(getMessage(MessageType.PLAYER_SINK));
                 }
                 return;
@@ -580,7 +580,7 @@ async function startGame() {
                     shotStatus = ShotStatus.DESTROYED;
                     showMessage(getMessage(MessageType.ENEMY_SINK));
                 }
-            }else{
+            } else {
                 showMessage(getMessage(MessageType.ENEMY_MISS));
             }
 
@@ -600,16 +600,9 @@ async function startGame() {
 
             }).catch(err => console.log("error updating the player after attack", err));
         }
-
-        // const firedShotStatus = await get(firedShotStatusRef);
-        // console.log(firedShotStatus.val());
-        // switch (firedShotStatus.val()) {
-        //     case ShotStatus.MISS: showMessage("Shot Missed"); break;
-        //     case ShotStatus.HIT: showMessage("Great Shot"); break;
-        //     case ShotStatus.DESTROYED: showMessage("A Ship Destroyed"); break;
-        // }
     })
-    // update my grid ui if its enemy turn
+
+    // update my grid ui
     onValue(playerBoardRef, async snapshot => {
         myBoard = snapshot.val();
         myBoard.map((cell, i) => {
@@ -623,7 +616,7 @@ async function startGame() {
         })
     })
 
-    // Update enemy grid ui if its my turn
+    // Update enemy grid ui
     onValue(enemyBoardRef, async snapshot => {
         enemyBoard = snapshot.val();
         enemyBoard.map((cell, i) => {
@@ -643,8 +636,17 @@ async function startGame() {
             const winnerPlayer = winnerSnapsot.val();
             showMessage("Winner is " + winnerPlayer.name);
 
-            $("#turnPlayerName").text(winnerPlayer == player.id ? "YOUR WIN" : "ENEMY WIN");
-            $("#turnPlayerName").css("color", winnerPlayer == player.id ? "#9DFF21" : "#ff2121");
+
+            // Remove the event handler after execution
+            $("#enemy-board .board").off('click', '.cell');
+
+            $("#turnPlayerName").text(winnerPlayer.id == player.id ? "YOU WIN" : "ENEMY WIN");
+            $("#turnPlayerName").css("color", winnerPlayer.id == player.id ? "#9DFF21" : "#ff2121");
+
+
+            const enemySnapshot = await get(enemyRef);
+            // show enemy ships
+            showEnemyShips(enemySnapshot.val().ships);
         }
 
     })
@@ -672,4 +674,28 @@ function showMessage(message: string): void {
         </div>
     `)
     setTimeout(() => $("#messages").empty(), 3000);
+}
+
+// show enemy ships
+function showEnemyShips(ships: Array<Ship>) {
+    for (let ship of ships) {
+        const index = ship.index;
+        const direction = ship.direction;
+        const imagePath = getAssetSrc(ship.id + '.png');
+
+        let $cell = $(`#enemy-board .cell`).eq(index);
+        if (direction == Direction.ROW) {
+            $cell.append(`
+            <div id="${ship.id}" class="ship" data-size="${ship.size}" direction="row">
+                <img src="${imagePath}" alt="">
+            </div>
+            `)
+        } else {
+            $cell.append(`
+            <div id="${ship.id}" class="ship" data-size="${ship.size}" direction="column">
+                <img src="${imagePath}" alt="">
+            </div>
+            `)
+        }
+    }
 }

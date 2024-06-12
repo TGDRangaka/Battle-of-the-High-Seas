@@ -447,6 +447,10 @@ ul {
     justify-content: center;
 }
 
+#enemy-board .cell .ship{
+    z-index: -1;
+}
+
 .shot > img{
     width: 100%;
     aspect-ratio:1;
