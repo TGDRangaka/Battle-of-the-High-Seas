@@ -294,13 +294,14 @@ function setShips(ships: Array<Ship>): void {
         const shipImgPath = getAssetSrc(ship.id + '.png');
         if (ship.status === ShipStatus.INACTIVE) {
             $(".guide-pane .ships").append(`
-            <div id="${ship.id}" class="ship" draggable="true" data-size="${ship.size}" direaction="column">
-                <img src="${shipImgPath}">
-            </div>
-        `)
+                <div id="${ship.id}" class="ship" draggable="true" data-size="${ship.size}" direaction="column">
+                    <img src="${shipImgPath}">
+                </div>
+            `)
         }
         $('.fleet .ships').append(`
             <div id="${ship.id}" class="ship" data-size="${ship.size}" direaction="column">
+                <div class="health">${'<div class="health-point"></div>'.repeat(ship.length)}</div>
                 <img src="${shipImgPath}">
             </div>
         `)
@@ -513,8 +514,10 @@ async function startGame() {
     const isHaveWinnerRef = ref(database, `rooms/${roomId}/gameStat/isHaveWinner`);
     const selectedCellRef = ref(database, `rooms/${roomId}/gameStat/selectedCell`);
     const enemyBoardRef = ref(database, `rooms/${roomId}/players/${enemy.id}/board/grid`);
-    const enemyRef = ref(database, `rooms/${roomId}/players/${enemy.id}`);
     const playerBoardRef = ref(database, `rooms/${roomId}/players/${player.id}/board/grid`);
+    const playerShipsRef = ref(database, `rooms/${roomId}/players/${player.id}/ships`);
+    const enemyShipsRef = ref(database, `rooms/${roomId}/players/${enemy.id}/ships`);
+    const enemyRef = ref(database, `rooms/${roomId}/players/${enemy.id}`);
 
     let enemyBoardSnapshot: DataSnapshot = await get(ref(database, `rooms/${roomId}/players/${enemy.id}/board/grid`));
     let enemyBoard: Array<Cell> = enemyBoardSnapshot.val();
@@ -615,7 +618,6 @@ async function startGame() {
             }
         })
     })
-
     // Update enemy grid ui
     onValue(enemyBoardRef, async snapshot => {
         enemyBoard = snapshot.val();
@@ -628,6 +630,38 @@ async function startGame() {
                 )
             }
         })
+    })
+
+    // update my fleet
+    onValue(playerShipsRef, snapshot => {
+        const ships = snapshot.val();
+        for (let ship of ships) {
+            // update healths
+            let length = ship.length;
+            let damage = length - ship.health;
+            // if(damage == 0) return;
+
+            while (damage-- != 0) {
+                $(`.player1-fleet #${ship.id} .health-point`).eq(--length).addClass("health-none");
+                // $(`.player1-fleet #${ship.id} .health-point`).eq(--length).css("background", "red");
+            }
+
+            // for(let i = length - 1; i > damage; i--){
+            //     console.log(i);
+            //     $(`.player1-fleet #${ship.id} .health-point`).eq(i).addClass("health-none");
+            // }
+        }
+    })
+
+    // update enemy fleet
+    onValue(enemyShipsRef, snapshot => {
+        const ships = snapshot.val();
+        for (let ship of ships) {
+            // update healths
+            if(ship.status == ShipStatus.DESTROYED){
+                $(`.player2-fleet #${ship.id} .health-point`).addClass("health-none");
+            }
+        }
     })
 
     onValue(isHaveWinnerRef, async snapshot => {

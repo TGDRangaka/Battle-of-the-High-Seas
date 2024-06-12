@@ -50,9 +50,13 @@ aside {
     flex-direction: column;
     justify-content: center;
 }
+.fleet {
+    position: relative;
+    width: 15vw;
+}
 
 .fleet .ships {
-    width: 15vw;
+    position: relative;
     /* height: 600px; */
     display: flex;
     flex-direction: column;
@@ -61,13 +65,20 @@ aside {
 }
 
 .fleet .ship {
+    position: relative;
     display: flex;
+    flex-direction: column;
+    height: 50px;
+    /* aspect-ratio: 1; */
 }
 
-.player2-fleet .ship {
-    /* border: 1px solid gold; */
-    display: flex;
-    justify-content: end;
+.fleet .ship img{
+    height: 100%;
+    position: absolute;
+}
+
+.player2-fleet .ship img, .player2-fleet .ship .health{
+    right: 0;
 }
 
 .player2-fleet .ships img {
@@ -83,6 +94,28 @@ aside {
 
 .player2-fleet .fleet-info {
     text-align: end;
+}
+
+.health {
+    position: absolute;
+    display: flex;
+    height: 100%;
+    width: fit-content;
+}
+
+.health .health-point{
+    height: 100%;
+    aspect-ratio:1;
+    background-color: #9fff21b4;
+    border: 1px solid rgba(255, 255, 255, 0.37)
+}
+
+/* .player2-fleet .health-point{
+    background-color: #ff2121b4;
+} */
+
+.health-none{
+    background-color: #ff5b46ad !important;
 }
 
 /* ///////////////////////////////////////////// */
@@ -449,6 +482,7 @@ ul {
 
 #enemy-board .cell .ship{
     z-index: -1;
+    animation: scale-image 1s ease-in;
 }
 
 .shot > img{
@@ -461,7 +495,7 @@ ul {
 
 @keyframes scale-image {
     from{
-        transform: scale(4);
+        transform: scale(5);
     }
     to{
         transform: scale(1);
@@ -585,3 +619,6 @@ ul {
     /* width: 250px; */
     height: 150px;
 }
+
+/* Missile */
+
