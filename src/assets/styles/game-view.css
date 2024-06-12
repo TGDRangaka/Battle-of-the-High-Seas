@@ -620,5 +620,6 @@ ul {
     height: 150px;
 }
 
-/* Missile */
-
+.boom{
+    position: absolute;
+}

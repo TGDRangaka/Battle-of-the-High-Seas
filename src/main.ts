@@ -32,9 +32,9 @@ const usersRef = ref(database, 'users');
 
 const ships: Array<Ship> = [
     // new Ship('ship-6-1', '6x1', 6, -1, ShipStatus.INACTIVE, 6, Direction.ROW),
-    new Ship('ship-4-2', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
-    new Ship('ship-4-1', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
-    new Ship('ship-3-2', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
+    // new Ship('ship-4-2', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
+    // new Ship('ship-4-1', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
+    // new Ship('ship-3-2', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
     new Ship('ship-3-1', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
     new Ship('ship-2-1', '2x1', 2, -1, ShipStatus.INACTIVE, 2, Direction.ROW)
 ];

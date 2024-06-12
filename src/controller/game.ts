@@ -556,8 +556,15 @@ async function startGame() {
                 let i = enemy.ships.findIndex(ship => ship.id === shotCell.inside);
                 if (enemy.ships[i].health > 1) {
                     showMessage(getMessage(MessageType.PLAYER_HIT));
+                    showExplostion([selectedCell], '#enemy-board');
                 } else {
                     showMessage(getMessage(MessageType.PLAYER_SINK));
+                    const shipIndex = enemy.ships[i].index;
+                    let indexes: number[] = [];
+                    for (let j = 0; j < enemy.ships[i].length; j++) {
+                        indexes.push(shipIndex + (enemy.ships[i].direction == Direction.ROW ? j : j * player.board.size));
+                    }
+                    showExplostion(indexes, '#enemy-board');
                 }
                 return;
             }
@@ -577,11 +584,19 @@ async function startGame() {
                     player.ships[i].status = ShipStatus.DAMAGED;
                     shotStatus = ShotStatus.HIT;
                     showMessage(getMessage(MessageType.ENEMY_HIT));
+                    showExplostion([selectedCell], '#player-board');
                 } else {
                     player.ships[i].health = 0;
                     player.ships[i].status = ShipStatus.DESTROYED;
                     shotStatus = ShotStatus.DESTROYED;
                     showMessage(getMessage(MessageType.ENEMY_SINK));
+
+                    const shipIndex = player.ships[i].index;
+                    let indexes: number[] = [];
+                    for (let j = 0; j < player.ships[i].length; j++) {
+                        indexes.push(shipIndex + (player.ships[i].direction == Direction.ROW ? j : j * player.board.size));
+                    }
+                    showExplostion(indexes, '#player-board');
                 }
             } else {
                 showMessage(getMessage(MessageType.ENEMY_MISS));
@@ -636,20 +651,12 @@ async function startGame() {
     onValue(playerShipsRef, snapshot => {
         const ships = snapshot.val();
         for (let ship of ships) {
-            // update healths
             let length = ship.length;
             let damage = length - ship.health;
-            // if(damage == 0) return;
 
             while (damage-- != 0) {
                 $(`.player1-fleet #${ship.id} .health-point`).eq(--length).addClass("health-none");
-                // $(`.player1-fleet #${ship.id} .health-point`).eq(--length).css("background", "red");
             }
-
-            // for(let i = length - 1; i > damage; i--){
-            //     console.log(i);
-            //     $(`.player1-fleet #${ship.id} .health-point`).eq(i).addClass("health-none");
-            // }
         }
     })
 
@@ -658,7 +665,7 @@ async function startGame() {
         const ships = snapshot.val();
         for (let ship of ships) {
             // update healths
-            if(ship.status == ShipStatus.DESTROYED){
+            if (ship.status == ShipStatus.DESTROYED) {
                 $(`.player2-fleet #${ship.id} .health-point`).addClass("health-none");
             }
         }
@@ -732,4 +739,16 @@ function showEnemyShips(ships: Array<Ship>) {
             `)
         }
     }
+}
+
+function showExplostion(indexes: number[], boardParent: string): void {
+    console.log(indexes);
+    for (let index of indexes) {
+        $(`${boardParent} .board .cell`).eq(index).append(`
+            <div class="boom"><img src="${getAssetSrc('explotion.gif')}" alt="boom"/>
+        `);
+    }
+    setTimeout(() => {
+        $(`${boardParent} .boom`).remove();
+    }, 1000)
 }
