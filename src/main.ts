@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInAnonymously, User } from "firebase/auth";
-import { child, get, getDatabase, onDisconnect, onValue, ref, set, update} from "firebase/database";
+import { child, get, getDatabase, onDisconnect, onValue, ref, set, update } from "firebase/database";
 import { Room, RoomStatus, Mode, Difficulty } from "./models/Room";
 import { Player, PlayerState } from "./models/Player";
 import { Board } from "./models/Board";
@@ -28,18 +28,6 @@ let userId: string;
 let userRef: any;
 let playerName: string;
 const usersRef = ref(database, 'users');
-
-
-const ships: Array<Ship> = [
-    new Ship('ship-6-1', '6x1', 6, -1, ShipStatus.INACTIVE, 6, Direction.ROW),
-    // new Ship('ship-4-2', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
-    new Ship('ship-4-1', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
-    new Ship('ship-3-2', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
-    new Ship('ship-3-1', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
-    new Ship('ship-2-1', '2x1', 2, -1, ShipStatus.INACTIVE, 2, Direction.ROW)
-];
-
-
 
 // Listen for changes to the list of users
 onAuthStateChanged(auth, async (user: User | null) => {
@@ -99,43 +87,7 @@ function getUserInfo(userId: string): string | null {
 
 // Create a room
 $("#createRoomBtn").on('click', async function () {
-    let isRoomCreated: boolean = false;
-    let roomId: number = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000;
-
-
-    while (!isRoomCreated) {
-        await get(child(ref(database), 'rooms/' + roomId)).then(async (rooms) => {
-            if (!rooms.exists()) {
-                // Create room, players, boards
-
-                const players: Map<string, Player> = new Map();
-                players.set(userId, new Player(userId, playerName, new Board(10), ships, PlayerState.NOT_READY))
-                const room: Room = new Room(
-                    roomId,
-                    players,
-                    RoomStatus.WAITING,
-                    Mode.DEFAULT,
-                    Difficulty.DEFAULT,
-                    userId
-                );
-
-                // Convert the Room object to a serializable object
-                const roomData = {
-                    ...room,
-                    players: mapToObject(room.players)
-                };
-
-                await set(ref(database, 'rooms/' + roomId), roomData).then(() => {
-                    // console.log('Room Created', roomData);
-                    isRoomCreated = true;
-
-                    goToRoom(roomId.toString());
-                }).catch(err => console.log('Error creating room', err));
-            }
-        }).catch(err => {
-            console.log(err.message);
-        }).finally(() => roomId = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000);
-    }
+    $(".create-room").toggle();
 });
 
 
@@ -157,7 +109,7 @@ $("#submitCode").click(async () => {
         if (playersMap.size < 2) {
             // Add the new player to the room
 
-            const newPlayer = new Player(userId, playerName, new Board(10), ships, PlayerState.NOT_READY);
+            const newPlayer = new Player(userId, playerName, new Board(getBoardSize(roomData.difficulty)), getShips(roomData.difficulty), PlayerState.NOT_READY);
 
             playersMap.set(newPlayer.id, newPlayer);
 
@@ -191,19 +143,18 @@ function mapToObject(map: Map<string, Player>): { [key: string]: Player } {
     return obj;
 }
 
-let isPopopOpened: boolean = false;
 // Join a room
 $("#joinRoomBtn").on('click', function () {
-    if (!isPopopOpened) {
-        isPopopOpened = true;
-        $(".pop-up").show();
-    }
-
+    $(".pop-up").toggle();
 });
 
 $(".close-btn").click(() => {
-    $(".pop-up").hide();
-    isPopopOpened = false;
+    $(".pop-up, .create-room").hide();
+})
+
+$(".card button").click(function () {
+    const difficulty = $(this).data('difficulty');
+    createRoom(difficulty);
 })
 
 function goToRoom(roomId: string) {
@@ -222,4 +173,83 @@ function generateRandomName(): string {
     const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
 
     return `${randomAdjective} ${randomNoun}`;
+}
+
+async function createRoom(difficulty: Difficulty) {
+    // return;
+    let isRoomCreated: boolean = false;
+    let roomId: number = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000;
+
+    while (!isRoomCreated) {
+        await get(child(ref(database), 'rooms/' + roomId)).then(async (rooms) => {
+            if (!rooms.exists()) {
+                // Create room, players, boards
+
+                const players: Map<string, Player> = new Map();
+                players.set(userId, new Player(userId, playerName, new Board(getBoardSize(difficulty)), getShips(difficulty), PlayerState.NOT_READY))
+                const room: Room = new Room(
+                    roomId,
+                    players,
+                    RoomStatus.WAITING,
+                    Mode.DEFAULT,
+                    difficulty,
+                    userId
+                );
+
+                // Convert the Room object to a serializable object
+                const roomData = {
+                    ...room,
+                    players: mapToObject(room.players)
+                };
+
+                await set(ref(database, 'rooms/' + roomId), roomData).then(() => {
+                    // console.log('Room Created', roomData);
+                    isRoomCreated = true;
+
+                    goToRoom(roomId.toString());
+                }).catch(err => console.log('Error creating room', err));
+            }
+        }).catch(err => {
+            console.log(err.message);
+        }).finally(() => roomId = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000);
+    }
+}
+
+function getBoardSize(difficulty: Difficulty): number{
+    return difficulty === Difficulty.EASY ? 7
+        : difficulty === Difficulty.DEFAULT ? 10
+            : 14;
+}
+
+function getShips(difficulty: Difficulty): Array<Ship> {
+    if (difficulty === Difficulty.EASY) {
+        return [
+            // new Ship('ship-6-1', '6x1', 6, -1, ShipStatus.INACTIVE, 6, Direction.ROW),
+            // new Ship('ship-4-2', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
+            // new Ship('ship-4-1', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
+            new Ship('ship-3-2', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
+            new Ship('ship-3-1', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
+            new Ship('ship-2-1', '2x1', 2, -1, ShipStatus.INACTIVE, 2, Direction.ROW)
+        ];
+    } else if (difficulty === Difficulty.DEFAULT) {
+        return [
+            // new Ship('ship-6-1', '6x1', 6, -1, ShipStatus.INACTIVE, 6, Direction.ROW),
+            new Ship('ship-4-2', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
+            new Ship('ship-4-1', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
+            new Ship('ship-3-2', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
+            new Ship('ship-3-1', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
+            new Ship('ship-2-1', '2x1', 2, -1, ShipStatus.INACTIVE, 2, Direction.ROW)
+        ];
+    } else {
+        return [
+            // new Ship('ship-6-1', '6x1', 6, -1, ShipStatus.INACTIVE, 6, Direction.ROW),
+            new Ship('ship-6-1', '6x1', 6, -1, ShipStatus.INACTIVE, 6, Direction.ROW),
+            new Ship('ship-4-2', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
+            new Ship('ship-4-1', '4x1', 4, -1, ShipStatus.INACTIVE, 4, Direction.ROW),
+            new Ship('ship-3-2', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
+            new Ship('ship-3-1', '3x1', 3, -1, ShipStatus.INACTIVE, 3, Direction.ROW),
+            new Ship('ship-2-1', '2x1', 2, -1, ShipStatus.INACTIVE, 2, Direction.ROW),
+            // new Ship('ship-2-1', '2x1', 2, -1, ShipStatus.INACTIVE, 2, Direction.ROW)
+        ];
+    }
 }

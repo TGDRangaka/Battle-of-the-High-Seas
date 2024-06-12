@@ -181,7 +181,7 @@ function buildPlayground(): void {
             for (let i = 0; i < shipLength; i++) {
                 let cellGap = ship.direction === Direction.ROW
                     ? i
-                    : (i * 10);
+                    : (i * boardSize);
                 const currentCellIndex = index + cellGap;
                 placingCells.push(currentCellIndex);
             }
@@ -311,6 +311,11 @@ function createBoard(board: Board): void {
         $dropzone.append(`<div data-index="${i}" class="cell"></div>`);
         $("#enemy-board .board").append(`<div data-index="${i}" class="cell"></div>`);
     }
+
+    $(".board").css({
+        gridTemplateColumns: `repeat(${boardSize}, 1fr)`,
+        gridTemplateRows: `repeat(${boardSize}, 1fr)`
+    })
 }
 
 function isShipCanPlace(index: number, ship: Ship): boolean {

@@ -383,8 +383,6 @@ section {
     height: 100%;
     display: grid;
     position: relative;
-    grid-template-columns: repeat(10, 1fr);
-    grid-template-rows: repeat(10, 1fr);
 }
 
 .cell {
