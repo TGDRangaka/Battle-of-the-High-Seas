@@ -13,12 +13,13 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Jura:wght@300..700&family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap"
         rel="stylesheet">
-  <script type="module" crossorigin src="/Battle-of-the-High-Seas/assets/game-DXp_5qEG.js"></script>
+  <script type="module" crossorigin src="/Battle-of-the-High-Seas/assets/game-DQExCFah.js"></script>
   <link rel="modulepreload" crossorigin href="/Battle-of-the-High-Seas/assets/Ship-mtCjgaWR.js">
-  <link rel="stylesheet" crossorigin href="/Battle-of-the-High-Seas/assets/game-B1HvdrNZ.css">
+  <link rel="stylesheet" crossorigin href="/Battle-of-the-High-Seas/assets/game-Bmp-x4ZS.css">
 </head>
 
 <body>
+    <div class="bg"></div>
 
     <!-- Showing enemy/your fleet include health -->
     <aside class="hidden">
@@ -35,33 +36,17 @@
         <header>
             <div class="player-info player">
                 <h2 class="player-name">Player 1</h2>
-                <button class="button-82-pushable" role="button" disabled>
-                    <span class="button-82-shadow"></span>
-                    <span class="button-82-edge"></span>
-                    <span class="button-82-front text">
-                        READY
-                    </span>
-                </button>
             </div>
 
             <div class="battle-info">
-                <div class="duration">
-                    <span>00:00</span>
-                </div>
                 <span id="roomId">ROOM ID #</span>
 
                 <h2 id="turnPlayerName" class="">Bizarre Wombat</h2>
+                <button id="readyBtn" class="button-77" role="button" disabled>READY</button>
             </div>
 
             <div class="player-info enemy">
-                <h2 class="player-name">Player 1</h2>
-                <button class="button-82-pushable" role="button" disabled>
-                    <span class="button-82-shadow"></span>
-                    <span class="button-82-edge"></span>
-                    <span class="button-82-front text">
-                        READY
-                    </span>
-                </button>
+                <h2 class="player-name">------</h2>
             </div>
         </header>
         <!-- Boards / Battlefields -->
@@ -124,7 +109,8 @@
     </div>
 
 
-    <button id="exitButton" class="button-92" role="button"><a href="/Battle-of-the-High-Seas/index.html">EXIT</a></button>
+    <button id="exitButton" class="button-92" role="button"><a
+            href="/Battle-of-the-High-Seas/index.html">EXIT</a></button>
 
 
 </body>
