@@ -8,6 +8,10 @@
 
     <link rel="stylesheet" href="../assets/styles/game-view.css">
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <!-- fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,6 +38,7 @@
         <header>
             <div class="player-info player">
                 <h2 class="player-name">Player 1</h2>
+                <span class="ready-icon"><i class="fa-solid fa-circle-notch not-ready"></i></span>
             </div>
 
             <div class="battle-info">
@@ -45,6 +50,7 @@
 
             <div class="player-info enemy">
                 <h2 class="player-name">------</h2>
+                <span class="ready-icon"></span>
             </div>
         </header>
         <!-- Boards / Battlefields -->
@@ -54,10 +60,10 @@
                 <div class="board" id="dropzone"></div>
 
                 <div class="number-row">
-                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+                    <!-- <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span> -->
                 </div>
                 <div class="letter-row">
-                    <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span><span>I</span><span>J</span>
+                    <!-- <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span><span>I</span><span>J</span> -->
                 </div>
             </div>
 
@@ -76,10 +82,10 @@
                 <div class="board">
                 </div>
                 <div class="number-row">
-                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+                    <!-- <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span> -->
                 </div>
                 <div class="letter-row">
-                    <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span><span>I</span><span>J</span>
+                    <!-- <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span><span>I</span><span>J</span> -->
                 </div>
             </div>
 
@@ -106,6 +112,7 @@
         </div> -->
     </div>
 
+    <span class="copyright">© 2024 TGDRangaka. All Rights Reserved.</span>
 
     <button id="exitButton" class="button-92" role="button"><a
             href="/Battle-of-the-High-Seas/index.html">EXIT</a></button>

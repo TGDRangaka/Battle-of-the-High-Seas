@@ -637,3 +637,24 @@ ul {
 .boom{
     position: absolute;
 }
+
+.ready {
+    color: #9DFF21;
+}
+
+.not-ready {
+    color: #a3a3a3;
+    animation: rotate-icon 1.4s linear infinite;
+}
+
+@keyframes rotate-icon {
+    to{transform: rotate(360deg);}
+}
+
+.copyright{
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    bottom: 4px;
+    color: #9DFF21;
+}

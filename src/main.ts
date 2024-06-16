@@ -152,7 +152,7 @@ $(".close-btn").click(() => {
     $(".pop-up, .create-room").hide();
 })
 
-$(".card button").click(function () {
+$(".card").click(function () {
     const difficulty = $(this).data('difficulty');
     createRoom(difficulty);
 })

@@ -106,6 +106,7 @@ onChildAdded(ref(database, `rooms/${roomId}/players`), snapshot => {
     if (snapshot.exists() && snapshot.val().id !== userId) {
         enemy = snapshot.val();
         $(".enemy .player-name").text(enemy.name);
+        $(".enemy .ready-icon").html('<i class="fa-solid fa-circle-notch not-ready"></i>');
         // alert("Player Joined!!!");
         showMessage("Player Joined")
     }
@@ -131,11 +132,11 @@ onValue(ref(database, `rooms/${roomId}/players`), async snapshot => {
     playersMap.forEach((player, key) => {
         // player action
         if (key === userId) {
-            player.state !== PlayerState.NOT_READY && (isPlayersAreReady[0] = true);
+            player.state !== PlayerState.NOT_READY && (isPlayersAreReady[0] = true) && $(".player .ready-icon").html('<i class="fa-solid fa-check ready"></i>');
         }
         // enemy action
         else {
-            player.state !== PlayerState.NOT_READY && (isPlayersAreReady[1] = true);
+            player.state !== PlayerState.NOT_READY && (isPlayersAreReady[1] = true) && $(".enemy .ready-icon").html('<i class="fa-solid fa-check ready"></i>');
         }
     })
 
@@ -489,6 +490,7 @@ function updateUI(): void {
     $("#dropzone .ship[draggable='true']").attr('draggable', 'false');
     $("#dropzone .ship").css('zIndex', '-1');
     $("#turnPlayerName").show();
+    $(".ready-icon").html("")
 }
 
 
